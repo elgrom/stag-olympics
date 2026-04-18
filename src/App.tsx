@@ -1,5 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+
+function usePageTitle(title: string) {
+  useEffect(() => { document.title = title }, [title])
+}
 import { useEventData } from './hooks/useEventData'
 import { useForfeits } from './hooks/useForfeits'
 import { ScoreHeader } from './components/ScoreHeader'
@@ -12,6 +16,7 @@ import { AdminPanel } from './components/admin/AdminPanel'
 import { QuizPlayer } from './components/QuizPlayer'
 
 function MainApp() {
+  usePageTitle('🏆 Stag Olympics — Leaderboard')
   const [activeTab, setActiveTab] = useState<'scores' | 'forfeits' | 'teams'>('scores')
   const [scoreTab, setScoreTab] = useState<'teams' | 'individual'>('teams')
   const { teams, players, rounds, totals, roundScores, individualRankings, currentRound } = useEventData()
@@ -44,6 +49,7 @@ function MainApp() {
 }
 
 function QuizPage() {
+  usePageTitle('🧠 Stag Olympics — Quiz')
   const { players } = useEventData()
   return (
     <div className="min-h-screen bg-gray-950 text-white">

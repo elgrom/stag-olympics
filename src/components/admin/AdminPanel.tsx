@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useEventData } from '../../hooks/useEventData'
 import { useForfeits } from '../../hooks/useForfeits'
 import { RoundControl } from './RoundControl'
@@ -8,6 +8,7 @@ import type { Player } from '../../lib/types'
 import { supabase } from '../../lib/supabase'
 
 export function AdminPanel() {
+  useEffect(() => { document.title = '⚙️ Stag Olympics — Admin' }, [])
   const { teams, players, rounds, totals, currentRound } = useEventData()
   const { addForfeit } = useForfeits()
   const [forfeitText, setForfeitText] = useState('')
