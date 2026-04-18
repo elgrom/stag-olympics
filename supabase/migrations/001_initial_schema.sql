@@ -62,6 +62,8 @@ create table forfeits (
 );
 
 -- Enable realtime on tables that change during the event
+alter publication supabase_realtime add table teams;
+alter publication supabase_realtime add table players;
 alter publication supabase_realtime add table team_scores;
 alter publication supabase_realtime add table individual_scores;
 alter publication supabase_realtime add table rounds;
