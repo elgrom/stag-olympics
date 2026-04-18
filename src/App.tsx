@@ -17,13 +17,9 @@ function MainApp() {
   const { teams, players, rounds, totals, roundScores, individualRankings, currentRound } = useEventData()
   const { forfeits, markUsed } = useForfeits()
 
-  // Show quiz view when Round 1 is live
-  const isQuizActive = currentRound?.number === 1
-
   return (
     <div className="min-h-screen bg-gray-950 text-white">
-      {isQuizActive && <QuizPlayer players={players} />}
-      {!isQuizActive && activeTab === 'scores' && (
+      {activeTab === 'scores' && (
         <>
           <ScoreHeader teams={teams} totals={totals} currentRound={currentRound} />
           <div className="flex border-b border-gray-800 mx-4 mb-3">
@@ -40,9 +36,18 @@ function MainApp() {
           {scoreTab === 'individual' && <IndividualBoard rankings={individualRankings} teams={teams} />}
         </>
       )}
-      {!isQuizActive && activeTab === 'forfeits' && <ForfeitWheel forfeits={forfeits} onMarkUsed={markUsed} />}
-      {!isQuizActive && activeTab === 'teams' && <TeamRosters teams={teams} players={players} />}
-      {!isQuizActive && <BottomNav active={activeTab} onChange={setActiveTab} />}
+      {activeTab === 'forfeits' && <ForfeitWheel forfeits={forfeits} onMarkUsed={markUsed} />}
+      {activeTab === 'teams' && <TeamRosters teams={teams} players={players} />}
+      <BottomNav active={activeTab} onChange={setActiveTab} />
+    </div>
+  )
+}
+
+function QuizPage() {
+  const { players } = useEventData()
+  return (
+    <div className="min-h-screen bg-gray-950 text-white">
+      <QuizPlayer players={players} />
     </div>
   )
 }
@@ -52,6 +57,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<MainApp />} />
+        <Route path="/quiz" element={<QuizPage />} />
         <Route path="/admin" element={<AdminPanel />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
