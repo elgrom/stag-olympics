@@ -12,14 +12,50 @@ export function QuizPlayer({ players }: Props) {
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null)
   const [answers, setAnswers] = useState<Record<number, string>>({})
   const [timeLeft, setTimeLeft] = useState(30)
+  const [claimedIds, setClaimedIds] = useState<Set<string>>(new Set())
   const timerRef = useRef<ReturnType<typeof setInterval>>()
   const { currentQuestion, revealed, finished } = useQuizChannel()
 
-  // Reset local state when quiz is reset (currentQuestion goes back to null while we have answers)
+  // Load already-claimed names from quiz_responses on mount
+  useEffect(() => {
+    supabase.from('quiz_responses').select('player_id').then(({ data }) => {
+      if (data) {
+        setClaimedIds(new Set(data.map(r => r.player_id)))
+      }
+    })
+  }, [])
+
+  // Listen for name claims from other players via broadcast
+  useEffect(() => {
+    const channel = supabase.channel('quiz-claims')
+      .on('broadcast', { event: 'claim' }, ({ payload }) => {
+        setClaimedIds(prev => new Set([...prev, payload.playerId]))
+      })
+      .on('broadcast', { event: 'reset_claims' }, () => {
+        setClaimedIds(new Set())
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [])
+
+  // Broadcast when claiming a name
+  const claimPlayer = (playerId: string) => {
+    setSelectedPlayerId(playerId)
+    setClaimedIds(prev => new Set([...prev, playerId]))
+    supabase.channel('quiz-claims').send({
+      type: 'broadcast',
+      event: 'claim',
+      payload: { playerId },
+    })
+  }
+
+  // Reset local state when quiz is reset
   useEffect(() => {
     if (currentQuestion === null && Object.keys(answers).length > 0) {
       setAnswers({})
       setSelectedPlayerId(null)
+      setClaimedIds(new Set())
     }
   }, [currentQuestion])
 
@@ -73,13 +109,22 @@ export function QuizPlayer({ players }: Props) {
         <div className="space-y-2">
           {players
             .sort((a, b) => a.first_name.localeCompare(b.first_name))
-            .map(player => (
-              <button key={player.id}
-                onClick={() => setSelectedPlayerId(player.id)}
-                className="w-full py-3 bg-gray-900 hover:bg-gray-800 rounded-lg text-sm font-medium">
-                {player.first_name} {player.last_name}
-              </button>
-            ))}
+            .map(player => {
+              const taken = claimedIds.has(player.id)
+              return (
+                <button key={player.id}
+                  onClick={() => !taken && claimPlayer(player.id)}
+                  disabled={taken}
+                  className={`w-full py-3 rounded-lg text-sm font-medium ${
+                    taken
+                      ? 'bg-gray-900/50 text-gray-600 cursor-not-allowed'
+                      : 'bg-gray-900 hover:bg-gray-800 text-white'
+                  }`}>
+                  {player.first_name} {player.last_name}
+                  {taken && <span className="ml-2 text-xs text-gray-500">✓ joined</span>}
+                </button>
+              )
+            })}
         </div>
       </div>
     )

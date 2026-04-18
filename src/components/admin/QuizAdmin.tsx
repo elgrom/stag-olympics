@@ -68,6 +68,7 @@ export function QuizAdmin({ players, onQuizComplete }: Props) {
     await supabase.from('individual_scores').delete().gte('created_at', '1970-01-01')
     broadcast({ type: 'reset' })
     refetchResponses()
+    supabase.channel('quiz-claims').send({ type: 'broadcast', event: 'reset_claims', payload: {} })
   }
 
   const finishQuiz = () => {
