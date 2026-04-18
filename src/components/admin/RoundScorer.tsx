@@ -8,57 +8,150 @@ interface Props {
   players: Player[]
 }
 
+// How many players per side for each round with individual scoring
+const PLAYERS_PER_SIDE: Record<number, number> = {
+  2: 3, // Petanque 3v3
+  4: 2, // Beer Pong 2v2
+  5: 2, // Tennis 2v2
+}
+
 export function RoundScorer({ round, teams, players }: Props) {
   const [matchNumber, setMatchNumber] = useState(1)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
 
+  // Lineups: { [matchNumber]: { [teamId]: playerId[] } }
+  const [lineups, setLineups] = useState<Record<number, Record<string, string[]>>>({})
+
+  const playersPerSide = PLAYERS_PER_SIDE[round.number] ?? 2
+
+  const getLineup = (match: number, teamId: string): string[] => {
+    return lineups[match]?.[teamId] ?? []
+  }
+
+  const togglePlayer = (match: number, teamId: string, playerId: string) => {
+    setLineups(prev => {
+      const current = prev[match]?.[teamId] ?? []
+      const updated = current.includes(playerId)
+        ? current.filter(id => id !== playerId)
+        : current.length < playersPerSide
+          ? [...current, playerId]
+          : current
+      return {
+        ...prev,
+        [match]: { ...prev[match], [teamId]: updated },
+      }
+    })
+  }
+
   const scoreMatch = async (winningTeamId: string) => {
     setSaving(true)
     setMessage('')
     const losingTeamId = teams.find(t => t.id !== winningTeamId)!.id
-    const scores = [
-      { round_id: round.id, team_id: winningTeamId, match_number: round.has_sub_matches ? matchNumber : null, points: round.points_per_win },
-      { round_id: round.id, team_id: losingTeamId, match_number: round.has_sub_matches ? matchNumber : null, points: round.points_per_loss },
-    ]
-    const { error } = await supabase.from('team_scores').insert(scores)
+    const matchNum = round.has_sub_matches ? matchNumber : null
+
+    // Insert team scores
+    const { error } = await supabase.from('team_scores').insert([
+      { round_id: round.id, team_id: winningTeamId, match_number: matchNum, points: round.points_per_win },
+      { round_id: round.id, team_id: losingTeamId, match_number: matchNum, points: round.points_per_loss },
+    ])
+
     if (error) {
       setMessage(`Error: ${error.message}`)
-    } else {
-      const winnerName = teams.find(t => t.id === winningTeamId)!.name
-      setMessage(`✅ ${winnerName} wins${round.has_sub_matches ? ` match ${matchNumber}` : ''}! (+${round.points_per_win} pts)`)
-      if (round.has_sub_matches) setMatchNumber(prev => prev + 1)
+      setSaving(false)
+      return
     }
+
+    // Insert individual scores for winning players
+    if (round.has_individual_scoring) {
+      const winningPlayers = getLineup(matchNumber, winningTeamId)
+      if (winningPlayers.length > 0) {
+        await supabase.from('individual_scores').insert(
+          winningPlayers.map(playerId => ({
+            round_id: round.id,
+            player_id: playerId,
+            match_number: matchNum,
+            points: 1,
+          }))
+        )
+      }
+    }
+
+    const winnerName = teams.find(t => t.id === winningTeamId)!.name
+    setMessage(`✅ ${winnerName} wins${round.has_sub_matches ? ` match ${matchNumber}` : ''}! (+${round.points_per_win} pts)`)
+    if (round.has_sub_matches) setMatchNumber(prev => prev + 1)
     setSaving(false)
   }
 
-  const scoreQuiz = async (scoreA: number, scoreB: number) => {
-    setSaving(true)
-    setMessage('')
-    const scores = [
-      { round_id: round.id, team_id: teams[0].id, match_number: null, points: scoreA },
-      { round_id: round.id, team_id: teams[1].id, match_number: null, points: scoreB },
-    ]
-    const { error } = await supabase.from('team_scores').insert(scores)
-    if (error) {
-      setMessage(`Error: ${error.message}`)
-    } else {
-      setMessage(`✅ Scores saved: ${teams[0].name} ${scoreA} - ${scoreB} ${teams[1].name}`)
-    }
-    setSaving(false)
-  }
-
+  // Quiz handled elsewhere
   if (round.number === 1) {
-    return <QuizScorer teams={teams} onSubmit={scoreQuiz} saving={saving} message={message} />
+    return <QuizScorer teams={teams} onSubmit={async (a, b) => {
+      setSaving(true)
+      setMessage('')
+      const { error } = await supabase.from('team_scores').insert([
+        { round_id: round.id, team_id: teams[0].id, match_number: null, points: a },
+        { round_id: round.id, team_id: teams[1].id, match_number: null, points: b },
+      ])
+      if (error) setMessage(`Error: ${error.message}`)
+      else setMessage(`✅ Scores saved: ${teams[0].name} ${a} - ${b} ${teams[1].name}`)
+      setSaving(false)
+    }} saving={saving} message={message} />
   }
 
   return (
     <div className="bg-gray-900 rounded-lg p-4 mb-4">
       <h3 className="font-bold text-sm mb-1">{round.emoji} R{round.number}: {round.name}</h3>
       <p className="text-xs text-gray-500 mb-3">{round.scoring_guidance}</p>
+
       {round.has_sub_matches && (
-        <p className="text-xs text-yellow-400 mb-2">Match {matchNumber} of {round.sub_match_count}</p>
+        <p className="text-xs text-yellow-400 mb-2">
+          Match {matchNumber} of {round.sub_match_count}
+        </p>
       )}
+
+      {/* Lineup picker for rounds with individual scoring */}
+      {round.has_individual_scoring && (
+        <div className="mb-4">
+          <p className="text-xs text-gray-400 mb-2">
+            Pick {playersPerSide} players per team for match {matchNumber}
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {teams.map(team => {
+              const teamPlayers = players.filter(p => p.team_id === team.id)
+              const selected = getLineup(matchNumber, team.id)
+              return (
+                <div key={team.id}>
+                  <p className="text-xs text-gray-500 mb-1 font-medium">{team.name} ({selected.length}/{playersPerSide})</p>
+                  <div className="space-y-1">
+                    {teamPlayers
+                      .sort((a, b) => a.first_name.localeCompare(b.first_name))
+                      .map(p => {
+                        const isSelected = selected.includes(p.id)
+                        const isFull = selected.length >= playersPerSide && !isSelected
+                        return (
+                          <button key={p.id}
+                            onClick={() => togglePlayer(matchNumber, team.id, p.id)}
+                            disabled={isFull}
+                            className={`w-full py-1.5 px-2 rounded text-xs text-left ${
+                              isSelected
+                                ? 'bg-blue-700 text-white'
+                                : isFull
+                                  ? 'bg-gray-800/50 text-gray-600'
+                                  : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+                            }`}>
+                            {p.first_name} {p.last_name}
+                          </button>
+                        )
+                      })}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Score buttons */}
       <p className="text-xs text-gray-400 mb-2">Who won?</p>
       <div className="flex gap-2">
         {teams.map(team => (
@@ -68,6 +161,7 @@ export function RoundScorer({ round, teams, players }: Props) {
           </button>
         ))}
       </div>
+
       {message && <p className="text-xs mt-2 text-center">{message}</p>}
     </div>
   )
