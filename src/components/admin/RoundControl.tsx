@@ -27,6 +27,7 @@ export function RoundControl({ rounds }: Props) {
     await supabase.from('team_scores').delete().gte('created_at', '1970-01-01')
     await supabase.from('quiz_responses').delete().gte('created_at', '1970-01-01')
     await supabase.from('rounds').update({ status: 'upcoming' }).gte('created_at', '1970-01-01')
+    await supabase.from('players').update({ team_id: null }).gte('created_at', '1970-01-01')
   }
 
   const restartRound = async (round: Round) => {
