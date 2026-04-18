@@ -88,6 +88,7 @@ create policy "Public read access" on forfeits for select using (true);
 create policy "Public insert" on team_scores for insert with check (true);
 create policy "Public insert" on individual_scores for insert with check (true);
 create policy "Public insert" on forfeits for insert with check (true);
+create policy "Public update" on teams for update using (true);
 create policy "Public update" on rounds for update using (true);
 create policy "Public update" on forfeits for update using (true);
 create policy "Public update" on players for update using (true);

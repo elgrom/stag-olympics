@@ -25,12 +25,31 @@ export function AdminPanel() {
 
   const unassignedPlayers = players.filter(p => !p.team_id)
 
+  const renameTeam = async (teamId: string, newName: string) => {
+    if (!newName.trim()) return
+    await supabase.from('teams').update({ name: newName.trim() }).eq('id', teamId)
+  }
+
   return (
     <div className="min-h-screen bg-gray-950 text-white p-4 pb-8">
       <h1 className="text-xl font-bold mb-1">⚙️ Admin Panel</h1>
       <p className="text-xs text-gray-500 mb-4">
         Score: {teams.map(t => `${t.name} ${totals[t.id] ?? 0}`).join(' - ')}
       </p>
+
+      {/* Team Names */}
+      {teams.length === 2 && (
+        <div className="bg-gray-900 rounded-lg p-4 mb-4">
+          <h3 className="font-bold text-sm mb-3">✏️ Team Names</h3>
+          <div className="flex gap-2">
+            {teams.map(t => (
+              <input key={t.id} defaultValue={t.name}
+                onBlur={e => renameTeam(t.id, e.target.value)}
+                className="flex-1 bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-center" />
+            ))}
+          </div>
+        </div>
+      )}
 
       <RoundControl rounds={rounds} />
 
