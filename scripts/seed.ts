@@ -15,12 +15,12 @@ async function seed() {
   console.log('Seeding database...')
 
   // Clear existing data (order matters for foreign keys)
-  await supabase.from('individual_scores').delete().neq('id', '')
-  await supabase.from('team_scores').delete().neq('id', '')
-  await supabase.from('players').delete().neq('id', '')
-  await supabase.from('rounds').delete().neq('id', '')
-  await supabase.from('forfeits').delete().neq('id', '')
-  await supabase.from('teams').delete().neq('id', '')
+  await supabase.from('individual_scores').delete().gte('created_at', '1970-01-01')
+  await supabase.from('team_scores').delete().gte('created_at', '1970-01-01')
+  await supabase.from('players').delete().gte('created_at', '1970-01-01')
+  await supabase.from('rounds').delete().gte('created_at', '1970-01-01')
+  await supabase.from('forfeits').delete().gte('created_at', '1970-01-01')
+  await supabase.from('teams').delete().gte('created_at', '1970-01-01')
 
   const { data: teams, error: teamsErr } = await supabase.from('teams').insert(TEAMS).select()
   if (teamsErr) throw teamsErr
