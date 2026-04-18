@@ -20,6 +20,10 @@ export function BottomNav({ active, onChange }: Props) {
             <div>{tab.label}</div>
           </button>
         ))}
+        <a href="/quiz" className="flex-1 py-3 text-center text-xs text-gray-500">
+          <div className="text-lg">🧠</div>
+          <div>Quiz</div>
+        </a>
       </div>
     </nav>
   )
