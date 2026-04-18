@@ -21,7 +21,7 @@ interface Props {
 
 export function QuizAdmin({ players, onQuizComplete }: Props) {
   const { currentQuestion, revealed, finished, broadcast } = useQuizChannel()
-  const responses = useRealtimeTable<QuizResponse>('quiz_responses')
+  const { rows: responses, refetch: refetchResponses } = useRealtimeTable<QuizResponse>('quiz_responses')
   const [timeLeft, setTimeLeft] = useState(30)
   const timerRef = useRef<ReturnType<typeof setInterval>>()
 
@@ -67,6 +67,7 @@ export function QuizAdmin({ players, onQuizComplete }: Props) {
     await supabase.from('quiz_responses').delete().gte('created_at', '1970-01-01')
     await supabase.from('individual_scores').delete().gte('created_at', '1970-01-01')
     broadcast({ type: 'reset' })
+    refetchResponses()
   }
 
   const finishQuiz = () => {

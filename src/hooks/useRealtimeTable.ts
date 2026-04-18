@@ -1,13 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 
 export function useRealtimeTable<T extends { id: string }>(
   table: string,
   orderBy?: { column: string; ascending?: boolean },
-): T[] {
+): { rows: T[]; refetch: () => void } {
   const [rows, setRows] = useState<T[]>([])
 
-  useEffect(() => {
+  const fetchData = useCallback(() => {
     const query = supabase.from(table).select('*')
     if (orderBy) {
       query.order(orderBy.column, { ascending: orderBy.ascending ?? true })
@@ -15,6 +15,10 @@ export function useRealtimeTable<T extends { id: string }>(
     query.then(({ data }) => {
       if (data) setRows(data as T[])
     })
+  }, [table, orderBy?.column, orderBy?.ascending])
+
+  useEffect(() => {
+    fetchData()
 
     const channel = supabase
       .channel(`${table}-changes`)
@@ -33,5 +37,5 @@ export function useRealtimeTable<T extends { id: string }>(
     return () => { supabase.removeChannel(channel) }
   }, [table, orderBy?.column, orderBy?.ascending])
 
-  return rows
+  return { rows, refetch: fetchData }
 }

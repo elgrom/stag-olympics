@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import type { Forfeit } from '../lib/types'
 
 export function useForfeits() {
-  const forfeits = useRealtimeTable<Forfeit>('forfeits')
+  const { rows: forfeits } = useRealtimeTable<Forfeit>('forfeits')
 
   const addForfeit = useCallback(async (text: string) => {
     await supabase.from('forfeits').insert({ text })
