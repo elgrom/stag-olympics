@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { QUIZ_QUESTIONS } from '../../lib/quiz-data'
 import { useQuizChannel } from '../../hooks/useQuizChannel'
 import { useRealtimeTable } from '../../hooks/useRealtimeTable'
+import { supabase } from '../../lib/supabase'
 import type { Player } from '../../lib/types'
 
 interface QuizResponse {
@@ -59,6 +60,13 @@ export function QuizAdmin({ players, onQuizComplete }: Props) {
     if (currentQuestion !== null && currentQuestion < 10) {
       showQuestion(currentQuestion + 1)
     }
+  }
+
+  const resetQuiz = async () => {
+    if (!confirm('Reset quiz? This wipes all responses.')) return
+    await supabase.from('quiz_responses').delete().gte('created_at', '1970-01-01')
+    await supabase.from('individual_scores').delete().gte('created_at', '1970-01-01')
+    broadcast({ type: 'reset' })
   }
 
   const finishQuiz = () => {
@@ -179,6 +187,12 @@ export function QuizAdmin({ players, onQuizComplete }: Props) {
           <p className="text-xs text-gray-500 mb-3">Scores have been saved as individual points. Proceed to the draft below.</p>
         </div>
       )}
+
+      {/* Reset */}
+      <button onClick={resetQuiz}
+        className="w-full py-2 mt-3 bg-gray-800 hover:bg-gray-700 rounded text-xs text-gray-400">
+        🔄 Reset Quiz & Wipe Responses
+      </button>
 
       {/* Live standings */}
       {standings.length > 0 && (

@@ -5,6 +5,7 @@ export type QuizEvent =
   | { type: 'show_question'; question: number }
   | { type: 'reveal'; question: number }
   | { type: 'finished' }
+  | { type: 'reset' }
 
 export function useQuizChannel() {
   const [currentQuestion, setCurrentQuestion] = useState<number | null>(null)
@@ -22,6 +23,10 @@ export function useQuizChannel() {
           setRevealed(true)
         } else if (ev.type === 'finished') {
           setFinished(true)
+        } else if (ev.type === 'reset') {
+          setCurrentQuestion(null)
+          setRevealed(false)
+          setFinished(false)
         }
       })
       .subscribe()
@@ -43,6 +48,10 @@ export function useQuizChannel() {
       setRevealed(true)
     } else if (event.type === 'finished') {
       setFinished(true)
+    } else if (event.type === 'reset') {
+      setCurrentQuestion(null)
+      setRevealed(false)
+      setFinished(false)
     }
   }, [])
 

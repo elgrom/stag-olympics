@@ -15,6 +15,14 @@ export function QuizPlayer({ players }: Props) {
   const timerRef = useRef<ReturnType<typeof setInterval>>()
   const { currentQuestion, revealed, finished } = useQuizChannel()
 
+  // Reset local state when quiz is reset (currentQuestion goes back to null while we have answers)
+  useEffect(() => {
+    if (currentQuestion === null && Object.keys(answers).length > 0) {
+      setAnswers({})
+      setSelectedPlayerId(null)
+    }
+  }, [currentQuestion])
+
   // Start/reset timer when a new question is shown
   useEffect(() => {
     if (currentQuestion === null || revealed) {
