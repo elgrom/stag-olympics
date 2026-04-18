@@ -20,6 +20,15 @@ export function RoundControl({ rounds }: Props) {
     await supabase.from('rounds').update({ status: 'completed' }).eq('id', round.id)
   }
 
+  const restartAll = async () => {
+    if (!confirm('Restart ALL rounds? This wipes every score and resets everything.')) return
+    if (!confirm('Are you sure? This cannot be undone.')) return
+    await supabase.from('individual_scores').delete().gte('created_at', '1970-01-01')
+    await supabase.from('team_scores').delete().gte('created_at', '1970-01-01')
+    await supabase.from('quiz_responses').delete().gte('created_at', '1970-01-01')
+    await supabase.from('rounds').update({ status: 'upcoming' }).gte('created_at', '1970-01-01')
+  }
+
   const restartRound = async (round: Round) => {
     if (!confirm(`Restart R${round.number} ${round.name}? This wipes its scores.`)) return
     // End any currently live round
@@ -75,6 +84,12 @@ export function RoundControl({ rounds }: Props) {
           </div>
         </div>
       )}
+
+      {/* Restart all */}
+      <button onClick={restartAll}
+        className="w-full py-2 mt-3 bg-gray-800 hover:bg-gray-700 rounded text-xs text-red-400">
+        ☠️ Restart entire event
+      </button>
     </div>
   )
 }
