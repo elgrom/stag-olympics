@@ -34,11 +34,15 @@ export function AdminPanel() {
 
       {currentRound && <RoundScorer round={currentRound} teams={teams} players={players} />}
 
-      {unassignedPlayers.length > 0 && teams.length === 2 && (
+      {teams.length === 2 && (
         <div className="bg-gray-900 rounded-lg p-4 mb-4">
           <h3 className="font-bold text-sm mb-3">🎯 Team Draft</h3>
-          <p className="text-xs text-gray-500 mb-2">Tap a name, then pick their team</p>
-          {unassignedPlayers.map(player => (
+          <p className="text-xs text-gray-500 mb-2">
+            Tap a team name to assign/reassign. {unassignedPlayers.length > 0 && `${unassignedPlayers.length} unassigned.`}
+          </p>
+          {players
+            .sort((a, b) => a.first_name.localeCompare(b.first_name))
+            .map(player => (
             <DraftRow key={player.id} player={player}
               teamNames={teams.map(t => ({ id: t.id, name: t.name }))}
               onAssign={assignPlayerToTeam} />
@@ -71,12 +75,19 @@ function DraftRow({ player, teamNames, onAssign }: {
     <div className="flex items-center justify-between py-2 border-b border-gray-800">
       <span className="text-sm">{player.first_name} {player.last_name}</span>
       <div className="flex gap-1">
-        {teamNames.map(team => (
-          <button key={team.id} onClick={() => onAssign(player.id, team.id)}
-            className="px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded text-xs">
-            {team.name}
-          </button>
-        ))}
+        {teamNames.map(team => {
+          const isCurrentTeam = player.team_id === team.id
+          return (
+            <button key={team.id} onClick={() => onAssign(player.id, team.id)}
+              className={`px-3 py-1 rounded text-xs font-medium ${
+                isCurrentTeam
+                  ? 'bg-green-700 text-white'
+                  : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+              }`}>
+              {team.name}
+            </button>
+          )
+        })}
       </div>
     </div>
   )
