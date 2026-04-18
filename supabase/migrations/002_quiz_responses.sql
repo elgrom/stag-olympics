@@ -16,3 +16,4 @@ alter publication supabase_realtime add table quiz_responses;
 alter table quiz_responses enable row level security;
 create policy "Public read access" on quiz_responses for select using (true);
 create policy "Public insert" on quiz_responses for insert with check (true);
+create policy "Public delete" on quiz_responses for delete using (true);
