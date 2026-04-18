@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react'
 import { QUIZ_QUESTIONS } from '../../lib/quiz-data'
 import { useQuizChannel } from '../../hooks/useQuizChannel'
 import { useRealtimeTable } from '../../hooks/useRealtimeTable'
@@ -20,6 +21,29 @@ interface Props {
 export function QuizAdmin({ players, onQuizComplete }: Props) {
   const { currentQuestion, revealed, finished, broadcast } = useQuizChannel()
   const responses = useRealtimeTable<QuizResponse>('quiz_responses')
+  const [timeLeft, setTimeLeft] = useState(30)
+  const timerRef = useRef<ReturnType<typeof setInterval>>()
+
+  // Start/reset timer when a new question is shown
+  useEffect(() => {
+    if (currentQuestion === null || revealed) {
+      if (timerRef.current) clearInterval(timerRef.current)
+      return
+    }
+
+    setTimeLeft(30)
+    timerRef.current = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current!)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => { if (timerRef.current) clearInterval(timerRef.current) }
+  }, [currentQuestion, revealed])
 
   const showQuestion = (num: number) => {
     broadcast({ type: 'show_question', question: num })
@@ -99,7 +123,24 @@ export function QuizAdmin({ players, onQuizComplete }: Props) {
       {currentQ && !finished && (
         <>
           <div className="mb-3">
-            <p className="text-xs text-yellow-400 mb-1">Question {currentQ.number} of 10</p>
+            <div className="flex justify-between items-center mb-1">
+              <p className="text-xs text-yellow-400">Question {currentQ.number} of 10</p>
+              {!revealed && (
+                <span className={`text-lg font-bold ${timeLeft <= 5 ? 'text-red-400' : 'text-yellow-400'}`}>
+                  {timeLeft}s
+                </span>
+              )}
+            </div>
+            {!revealed && (
+              <div className="h-1 bg-gray-800 rounded-full mb-2 overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-1000 ease-linear ${
+                    timeLeft <= 5 ? 'bg-red-500' : 'bg-yellow-500'
+                  }`}
+                  style={{ width: `${(timeLeft / 30) * 100}%` }}
+                />
+              </div>
+            )}
             <p className="text-sm font-medium">{currentQ.text}</p>
             <p className="text-xs text-green-400 mt-1">
               Answer: {currentQ.correctAnswer}) {currentQ.options.find(o => o.label === currentQ.correctAnswer)?.value}
