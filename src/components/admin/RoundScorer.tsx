@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import { ROUND_INFO } from '../../lib/round-info'
 import type { Round, Team, Player } from '../../lib/types'
 
 interface Props {
@@ -101,7 +102,11 @@ export function RoundScorer({ round, teams, players }: Props) {
   return (
     <div className="bg-gray-900 rounded-lg p-4 mb-4">
       <h3 className="font-bold text-sm mb-1">{round.emoji} R{round.number}: {round.name}</h3>
-      <p className="text-xs text-gray-500 mb-3">{round.scoring_guidance}</p>
+
+      {/* Round info panel */}
+      {ROUND_INFO[round.number] && (
+        <RoundInfoPanel info={ROUND_INFO[round.number]} />
+      )}
 
       {round.has_sub_matches && (
         <p className="text-xs text-yellow-400 mb-2">
@@ -205,6 +210,39 @@ function QuizScorer({ teams, onSubmit, saving, message }: {
         Submit Quiz Scores
       </button>
       {message && <p className="text-xs mt-2 text-center">{message}</p>}
+    </div>
+  )
+}
+
+function RoundInfoPanel({ info }: { info: import('../../lib/round-info').RoundInfo }) {
+  const [expanded, setExpanded] = useState(false)
+
+  return (
+    <div className="mb-3">
+      <button onClick={() => setExpanded(!expanded)}
+        className="text-xs text-blue-400 mb-1">
+        {expanded ? '▼ Hide details' : '▶ Rules, kit & drinking'}
+      </button>
+      {expanded && (
+        <div className="bg-gray-800 rounded p-3 text-xs space-y-2">
+          <div>
+            <span className="text-gray-500 uppercase tracking-wide text-[10px]">Format</span>
+            <p className="text-gray-300 mt-0.5">{info.format}</p>
+          </div>
+          <div>
+            <span className="text-gray-500 uppercase tracking-wide text-[10px]">Scoring</span>
+            <p className="text-gray-300 mt-0.5">{info.scoring}</p>
+          </div>
+          <div>
+            <span className="text-gray-500 uppercase tracking-wide text-[10px]">Kit needed</span>
+            <p className="text-gray-300 mt-0.5">{info.kit}</p>
+          </div>
+          <div>
+            <span className="text-gray-500 uppercase tracking-wide text-[10px]">Drinking rule</span>
+            <p className="text-yellow-400 mt-0.5">🍺 {info.drinking}</p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
