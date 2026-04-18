@@ -119,6 +119,15 @@ export function RoundScorer({ round, teams, players }: Props) {
             {teams.map(team => {
               const teamPlayers = players.filter(p => p.team_id === team.id)
               const selected = getLineup(matchNumber, team.id)
+
+              // Collect players already used in previous matches
+              const usedInPrevious = new Set<string>()
+              for (let m = 1; m < matchNumber; m++) {
+                for (const id of getLineup(m, team.id)) {
+                  usedInPrevious.add(id)
+                }
+              }
+
               return (
                 <div key={team.id}>
                   <p className="text-xs text-gray-500 mb-1 font-medium">{team.name} ({selected.length}/{playersPerSide})</p>
@@ -127,19 +136,23 @@ export function RoundScorer({ round, teams, players }: Props) {
                       .sort((a, b) => a.first_name.localeCompare(b.first_name))
                       .map(p => {
                         const isSelected = selected.includes(p.id)
+                        const isUsed = usedInPrevious.has(p.id)
                         const isFull = selected.length >= playersPerSide && !isSelected
                         return (
                           <button key={p.id}
-                            onClick={() => togglePlayer(matchNumber, team.id, p.id)}
-                            disabled={isFull}
+                            onClick={() => !isUsed && togglePlayer(matchNumber, team.id, p.id)}
+                            disabled={isFull || isUsed}
                             className={`w-full py-1.5 px-2 rounded text-xs text-left ${
-                              isSelected
-                                ? 'bg-blue-700 text-white'
-                                : isFull
-                                  ? 'bg-gray-800/50 text-gray-600'
-                                  : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+                              isUsed
+                                ? 'bg-gray-800/30 text-gray-600 line-through'
+                                : isSelected
+                                  ? 'bg-blue-700 text-white'
+                                  : isFull
+                                    ? 'bg-gray-800/50 text-gray-600'
+                                    : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
                             }`}>
                             {p.first_name} {p.last_name}
+                            {isUsed && <span className="ml-1 no-underline">✓</span>}
                           </button>
                         )
                       })}
