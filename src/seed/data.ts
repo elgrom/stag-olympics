@@ -9,7 +9,7 @@ export const PLAYERS = [
   { first_name: 'Brandon', last_name: 'Austin' },
   { first_name: 'Bryan', last_name: 'Bennet' },
   { first_name: 'Cam', last_name: 'Miskin' },
-  { first_name: 'Dave', last_name: 'Jensen' },
+  { first_name: 'Diccon', last_name: 'Mayfield' },
   { first_name: 'Dom', last_name: 'Obrien' },
   { first_name: 'Dom', last_name: 'Andre' },
   { first_name: 'Grahame', last_name: 'Johnston' },
