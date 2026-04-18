@@ -48,6 +48,55 @@ export function calcIndividualTotals(
     .sort((a, b) => b.total - a.total || b.player.id.localeCompare(a.player.id))
 }
 
+/**
+ * For rounds with no team_scores (e.g. the quiz), create virtual team scores
+ * by summing individual scores grouped by each player's team.
+ */
+export function calcIndividualAsTeamScores(
+  players: Player[],
+  individualScores: IndividualScore[],
+  teamScores: TeamScore[],
+): TeamScore[] {
+  // Find which rounds already have team_scores
+  const roundsWithTeamScores = new Set(teamScores.map(s => s.round_id))
+
+  // Only process individual scores for rounds WITHOUT team_scores
+  const orphanedScores = individualScores.filter(
+    s => !roundsWithTeamScores.has(s.round_id)
+  )
+
+  // Build a player -> team lookup
+  const playerTeam: Record<string, string> = {}
+  for (const p of players) {
+    if (p.team_id) playerTeam[p.id] = p.team_id
+  }
+
+  // Sum by round + team
+  const grouped: Record<string, Record<string, number>> = {}
+  for (const s of orphanedScores) {
+    const teamId = playerTeam[s.player_id]
+    if (!teamId) continue
+    if (!grouped[s.round_id]) grouped[s.round_id] = {}
+    grouped[s.round_id][teamId] = (grouped[s.round_id][teamId] ?? 0) + s.points
+  }
+
+  // Convert to TeamScore-shaped objects
+  const virtual: TeamScore[] = []
+  for (const [roundId, teams] of Object.entries(grouped)) {
+    for (const [teamId, points] of Object.entries(teams)) {
+      virtual.push({
+        id: `virtual-${roundId}-${teamId}`,
+        round_id: roundId,
+        team_id: teamId,
+        match_number: null,
+        points,
+        created_at: '',
+      })
+    }
+  }
+  return virtual
+}
+
 export function getLeadingTeamId(
   totals: Record<string, number>,
 ): string | null {

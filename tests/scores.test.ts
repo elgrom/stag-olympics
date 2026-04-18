@@ -3,6 +3,7 @@ import {
   calcTeamTotals,
   calcRoundScores,
   calcIndividualTotals,
+  calcIndividualAsTeamScores,
   getLeadingTeamId,
 } from '../src/lib/scores'
 import type { Team, TeamScore, IndividualScore, Player, Round } from '../src/lib/types'
@@ -76,6 +77,49 @@ describe('calcIndividualTotals', () => {
     expect(result[0]).toEqual({ player: players[0], total: 2 })
     expect(result[1]).toEqual({ player: players[2], total: 1 })
     expect(result[2]).toEqual({ player: players[1], total: 1 })
+  })
+})
+
+describe('calcIndividualAsTeamScores', () => {
+  const players: Player[] = [
+    { id: 'p1', first_name: 'Cam', last_name: 'Miskin', team_id: 'a', created_at: '' },
+    { id: 'p2', first_name: 'Ricky', last_name: 'Iles', team_id: 'a', created_at: '' },
+    { id: 'p3', first_name: 'Dom', last_name: 'Obrien', team_id: 'b', created_at: '' },
+  ]
+
+  it('creates team scores from individual scores for rounds without team_scores', () => {
+    const individualScores: IndividualScore[] = [
+      { id: '1', round_id: 'r1', player_id: 'p1', match_number: null, points: 7, created_at: '' },
+      { id: '2', round_id: 'r1', player_id: 'p2', match_number: null, points: 5, created_at: '' },
+      { id: '3', round_id: 'r1', player_id: 'p3', match_number: null, points: 8, created_at: '' },
+    ]
+    const result = calcIndividualAsTeamScores(players, individualScores, [])
+    const byTeam: Record<string, number> = {}
+    for (const s of result) { byTeam[s.team_id] = (byTeam[s.team_id] ?? 0) + s.points }
+    expect(byTeam['a']).toBe(12) // 7 + 5
+    expect(byTeam['b']).toBe(8)
+  })
+
+  it('ignores individual scores for rounds that already have team_scores', () => {
+    const teamScores: TeamScore[] = [
+      { id: '1', round_id: 'r2', team_id: 'a', match_number: 1, points: 3, created_at: '' },
+    ]
+    const individualScores: IndividualScore[] = [
+      { id: '1', round_id: 'r2', player_id: 'p1', match_number: 1, points: 1, created_at: '' },
+    ]
+    const result = calcIndividualAsTeamScores(players, individualScores, teamScores)
+    expect(result).toEqual([])
+  })
+
+  it('ignores players with no team assigned', () => {
+    const unassigned: Player[] = [
+      { id: 'p1', first_name: 'Cam', last_name: 'Miskin', team_id: null, created_at: '' },
+    ]
+    const individualScores: IndividualScore[] = [
+      { id: '1', round_id: 'r1', player_id: 'p1', match_number: null, points: 5, created_at: '' },
+    ]
+    const result = calcIndividualAsTeamScores(unassigned, individualScores, [])
+    expect(result).toEqual([])
   })
 })
 
