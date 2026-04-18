@@ -37,9 +37,24 @@ export function AdminPanel() {
       {teams.length === 2 && (
         <div className="bg-gray-900 rounded-lg p-4 mb-4">
           <h3 className="font-bold text-sm mb-3">🎯 Team Draft</h3>
-          <p className="text-xs text-gray-500 mb-2">
-            Tap a team name to assign/reassign. {unassignedPlayers.length > 0 && `${unassignedPlayers.length} unassigned.`}
-          </p>
+          <div className="flex gap-2 mb-3">
+            {teams.map(t => {
+              const count = players.filter(p => p.team_id === t.id).length
+              return (
+                <div key={t.id} className="flex-1 text-center bg-gray-800 rounded py-2">
+                  <div className="text-xs text-gray-400">{t.name}</div>
+                  <div className="text-lg font-bold">{count}</div>
+                </div>
+              )
+            })}
+            {unassignedPlayers.length > 0 && (
+              <div className="flex-1 text-center bg-gray-800 rounded py-2">
+                <div className="text-xs text-yellow-400">Unassigned</div>
+                <div className="text-lg font-bold text-yellow-400">{unassignedPlayers.length}</div>
+              </div>
+            )}
+          </div>
+          <p className="text-xs text-gray-500 mb-2">Tap a team name to assign/reassign.</p>
           {players
             .sort((a, b) => a.first_name.localeCompare(b.first_name))
             .map(player => (
