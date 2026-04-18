@@ -16,7 +16,7 @@ import { AdminPanel } from './components/admin/AdminPanel'
 import { QuizPlayer } from './components/QuizPlayer'
 
 function MainApp() {
-  usePageTitle('🏆 Stag Olympics — Leaderboard')
+  usePageTitle('SO - Leaderboard')
   const [activeTab, setActiveTab] = useState<'scores' | 'forfeits' | 'teams'>('scores')
   const [scoreTab, setScoreTab] = useState<'teams' | 'individual'>('teams')
   const { teams, players, rounds, totals, roundScores, individualRankings, currentRound } = useEventData()
@@ -49,7 +49,7 @@ function MainApp() {
 }
 
 function QuizPage() {
-  usePageTitle('🧠 Stag Olympics — Quiz')
+  usePageTitle('SO - Quiz')
   const { players } = useEventData()
   return (
     <div className="min-h-screen bg-gray-950 text-white">
