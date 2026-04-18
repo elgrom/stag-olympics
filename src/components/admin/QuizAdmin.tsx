@@ -207,7 +207,7 @@ export function QuizAdmin({ players, onQuizComplete }: Props) {
               }`}>
               <span>
                 {i < 2 && finished ? '👑 ' : `${i + 1}. `}
-                {s.player.first_name} {s.player.last_name}
+                {s.player.nickname || s.player.first_name} {s.player.last_name}
               </span>
               <span>{s.correct}/{s.total}</span>
             </div>

@@ -1,3 +1,4 @@
+import { displayName } from '../lib/types'
 import type { Team, Player } from '../lib/types'
 
 interface Props {
@@ -23,7 +24,7 @@ export function TeamRosters({ teams, players }: Props) {
               ) : (
                 <ul className="space-y-1">
                   {teamPlayers.map(p => (
-                    <li key={p.id} className="text-xs text-gray-300">{p.first_name} {p.last_name}</li>
+                    <li key={p.id} className="text-xs text-gray-300">{displayName(p)}</li>
                   ))}
                 </ul>
               )}
@@ -36,7 +37,7 @@ export function TeamRosters({ teams, players }: Props) {
           <h3 className="text-sm text-gray-500 text-center mb-2">Awaiting draft ({unassigned.length})</h3>
           <div className="flex flex-wrap gap-1 justify-center">
             {unassigned.map(p => (
-              <span key={p.id} className="text-xs bg-gray-800 px-2 py-1 rounded">{p.first_name}</span>
+              <span key={p.id} className="text-xs bg-gray-800 px-2 py-1 rounded">{displayName(p)}</span>
             ))}
           </div>
         </div>

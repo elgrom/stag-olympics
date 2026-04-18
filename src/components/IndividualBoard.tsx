@@ -1,4 +1,5 @@
 import type { PlayerTotal } from '../lib/scores'
+import { displayName } from '../lib/types'
 import type { Team } from '../lib/types'
 
 interface Props {
@@ -36,7 +37,7 @@ export function IndividualBoard({ rankings, teams }: Props) {
                 <td className="py-2">
                   <span className="flex items-center gap-2">
                     <span className={`w-2 h-2 rounded-full ${teamColor}`} />
-                    {entry.player.first_name} {entry.player.last_name}
+                    {displayName(entry.player)}
                   </span>
                 </td>
                 <td className="py-2 text-right font-bold">{entry.total}</td>

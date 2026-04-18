@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { ROUND_INFO } from '../../lib/round-info'
+import { displayName } from '../../lib/types'
 import type { Round, Team, Player } from '../../lib/types'
 
 interface Props {
@@ -156,7 +157,7 @@ export function RoundScorer({ round, teams, players }: Props) {
                                     ? 'bg-gray-800/50 text-gray-600'
                                     : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
                             }`}>
-                            {p.first_name} {p.last_name}
+                            {displayName(p)}
                             {isUsed && <span className="ml-1 no-underline">✓</span>}
                           </button>
                         )

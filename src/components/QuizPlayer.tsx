@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { QUIZ_QUESTIONS } from '../lib/quiz-data'
 import { useQuizChannel } from '../hooks/useQuizChannel'
+import { displayName } from '../lib/types'
 import type { Player } from '../lib/types'
 
 interface Props {
@@ -112,34 +113,75 @@ export function QuizPlayer({ players }: Props) {
     })
   }, [revealed, timeLeft])
 
+  const [nicknameStep, setNicknameStep] = useState(false)
+  const [nicknameInput, setNicknameInput] = useState('')
+
+  const confirmJoin = async () => {
+    if (!selectedPlayerId) return
+    if (nicknameInput.trim()) {
+      await supabase.from('players').update({ nickname: nicknameInput.trim() }).eq('id', selectedPlayerId)
+    }
+    setNicknameStep(false)
+  }
+
   // Player selection screen
-  if (!selectedPlayerId) {
+  if (!selectedPlayerId || nicknameStep) {
+    // Step 1: pick name
+    if (!selectedPlayerId) {
+      return (
+        <div className="px-4 pt-6 pb-24">
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold">🧠 How Well Do You Know Diccon?</h1>
+            <p className="text-sm text-gray-400 mt-2">Select your name to join the quiz</p>
+          </div>
+          <div className="space-y-2">
+            {players
+              .sort((a, b) => a.first_name.localeCompare(b.first_name))
+              .map(player => {
+                const taken = claimedIds.has(player.id)
+                return (
+                  <button key={player.id}
+                    onClick={() => {
+                      if (!taken) {
+                        claimPlayer(player.id)
+                        setNicknameInput(player.nickname || '')
+                        setNicknameStep(true)
+                      }
+                    }}
+                    disabled={taken}
+                    className={`w-full py-3 rounded-lg text-sm font-medium ${
+                      taken
+                        ? 'bg-gray-900/50 text-gray-600 cursor-not-allowed'
+                        : 'bg-gray-900 hover:bg-gray-800 text-white'
+                    }`}>
+                    {player.first_name} {player.last_name}
+                    {player.nickname && <span className="ml-1 text-gray-500">({player.nickname})</span>}
+                    {taken && <span className="ml-2 text-xs text-gray-500">✓ joined</span>}
+                  </button>
+                )
+              })}
+          </div>
+        </div>
+      )
+    }
+
+    // Step 2: nickname
+    const pickedPlayer = players.find(p => p.id === selectedPlayerId)
     return (
-      <div className="px-4 pt-6 pb-24">
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold">🧠 How Well Do You Know Diccon?</h1>
-          <p className="text-sm text-gray-400 mt-2">Select your name to join the quiz</p>
-        </div>
-        <div className="space-y-2">
-          {players
-            .sort((a, b) => a.first_name.localeCompare(b.first_name))
-            .map(player => {
-              const taken = claimedIds.has(player.id)
-              return (
-                <button key={player.id}
-                  onClick={() => !taken && claimPlayer(player.id)}
-                  disabled={taken}
-                  className={`w-full py-3 rounded-lg text-sm font-medium ${
-                    taken
-                      ? 'bg-gray-900/50 text-gray-600 cursor-not-allowed'
-                      : 'bg-gray-900 hover:bg-gray-800 text-white'
-                  }`}>
-                  {player.first_name} {player.last_name}
-                  {taken && <span className="ml-2 text-xs text-gray-500">✓ joined</span>}
-                </button>
-              )
-            })}
-        </div>
+      <div className="px-4 pt-6 pb-24 text-center">
+        <h1 className="text-2xl font-bold mb-2">🧠 How Well Do You Know Diccon?</h1>
+        <p className="text-gray-400 mb-6">Hi {pickedPlayer?.first_name}! Want a nickname for the leaderboard?</p>
+        <input
+          type="text"
+          value={nicknameInput}
+          onChange={e => setNicknameInput(e.target.value)}
+          placeholder={pickedPlayer?.first_name}
+          className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-center text-sm mb-4"
+        />
+        <button onClick={confirmJoin}
+          className="w-full py-3 bg-green-700 hover:bg-green-600 rounded-lg font-bold text-sm">
+          {nicknameInput.trim() ? `Join as "${nicknameInput.trim()}"` : 'Join without nickname'}
+        </button>
       </div>
     )
   }

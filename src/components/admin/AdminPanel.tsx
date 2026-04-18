@@ -133,10 +133,22 @@ export function AdminPanel() {
 function DraftRow({ player, teamNames, onAssign }: {
   player: Player; teamNames: { id: string; name: string }[]; onAssign: (playerId: string, teamId: string) => void
 }) {
+  const setNickname = async (nickname: string) => {
+    await supabase.from('players').update({ nickname: nickname || null }).eq('id', player.id)
+  }
+
   return (
-    <div className="flex items-center justify-between py-2 border-b border-gray-800">
-      <span className="text-sm">{player.first_name} {player.last_name}</span>
-      <div className="flex gap-1">
+    <div className="flex items-center gap-2 py-2 border-b border-gray-800">
+      <div className="flex-1 min-w-0">
+        <span className="text-sm">{player.first_name} {player.last_name}</span>
+        <input
+          defaultValue={player.nickname || ''}
+          onBlur={e => setNickname(e.target.value.trim())}
+          placeholder="nickname"
+          className="block w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs mt-1"
+        />
+      </div>
+      <div className="flex gap-1 shrink-0">
         {teamNames.map(team => {
           const isCurrentTeam = player.team_id === team.id
           return (

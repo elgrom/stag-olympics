@@ -8,8 +8,14 @@ export interface Player {
   id: string
   first_name: string
   last_name: string
+  nickname: string | null
   team_id: string | null
   created_at: string
+}
+
+/** Display name: nickname if set, otherwise first name */
+export function displayName(player: Player): string {
+  return player.nickname || player.first_name
 }
 
 export interface Round {
