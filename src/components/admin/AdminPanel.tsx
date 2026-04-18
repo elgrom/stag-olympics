@@ -8,7 +8,7 @@ import type { Player } from '../../lib/types'
 import { supabase } from '../../lib/supabase'
 
 export function AdminPanel() {
-  useEffect(() => { document.title = 'SO - Admin' }, [])
+  useEffect(() => { document.title = '⚙️ SO - Admin' }, [])
   const { teams, players, rounds, totals, currentRound } = useEventData()
   const { addForfeit } = useForfeits()
   const [forfeitText, setForfeitText] = useState('')
