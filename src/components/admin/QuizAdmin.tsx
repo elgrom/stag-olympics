@@ -23,7 +23,7 @@ export function QuizAdmin({ players, onQuizComplete }: Props) {
   const { currentQuestion, revealed, finished, broadcast } = useQuizChannel()
   const { rows: responses, refetch: refetchResponses } = useRealtimeTable<QuizResponse>('quiz_responses')
   const [timeLeft, setTimeLeft] = useState(30)
-  const timerRef = useRef<ReturnType<typeof setInterval>>()
+  const timerRef = useRef<ReturnType<typeof setInterval>>(undefined)
 
   // Start/reset timer when a new question is shown
   useEffect(() => {
@@ -167,7 +167,7 @@ export function QuizAdmin({ players, onQuizComplete }: Props) {
                 className="flex-1 py-2 bg-yellow-700 hover:bg-yellow-600 rounded text-sm font-medium">
                 Reveal Answer
               </button>
-            ) : currentQuestion < 10 ? (
+            ) : currentQuestion !== null && currentQuestion < 10 ? (
               <button onClick={nextQuestion}
                 className="flex-1 py-2 bg-blue-700 hover:bg-blue-600 rounded text-sm font-medium">
                 Next Question →

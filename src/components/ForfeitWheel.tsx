@@ -10,7 +10,7 @@ export function ForfeitWheel({ forfeits, onMarkUsed }: Props) {
   const [spinning, setSpinning] = useState(false)
   const [result, setResult] = useState<Forfeit | null>(null)
   const [rotation, setRotation] = useState(0)
-  const timerRef = useRef<ReturnType<typeof setTimeout>>()
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   const available = forfeits.filter(f => !f.is_used)
 

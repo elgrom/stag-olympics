@@ -14,7 +14,7 @@ export function QuizPlayer({ players }: Props) {
   const [answers, setAnswers] = useState<Record<number, string>>({})
   const [timeLeft, setTimeLeft] = useState(30)
   const [claimedIds, setClaimedIds] = useState<Set<string>>(new Set())
-  const timerRef = useRef<ReturnType<typeof setInterval>>()
+  const timerRef = useRef<ReturnType<typeof setInterval>>(undefined)
   const { currentQuestion, revealed, finished } = useQuizChannel()
 
   // Load already-claimed names from quiz_responses on mount
