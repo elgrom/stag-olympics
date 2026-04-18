@@ -10,7 +10,7 @@ import { supabase } from '../../lib/supabase'
 export function AdminPanel() {
   useEffect(() => { document.title = '⚙️ SO - Admin' }, [])
   const { teams, players, rounds, totals, currentRound } = useEventData()
-  const { addForfeit } = useForfeits()
+  const { forfeits, addForfeit, clearAll: clearForfeits } = useForfeits()
   const [forfeitText, setForfeitText] = useState('')
 
   const handleAddForfeit = async () => {
@@ -107,8 +107,8 @@ export function AdminPanel() {
       )}
 
       <div className="bg-gray-900 rounded-lg p-4 mb-4">
-        <h3 className="font-bold text-sm mb-3">🎡 Add Forfeit</h3>
-        <div className="flex gap-2">
+        <h3 className="font-bold text-sm mb-3">🎡 Forfeits ({forfeits.length})</h3>
+        <div className="flex gap-2 mb-3">
           <input type="text" value={forfeitText} onChange={e => setForfeitText(e.target.value)}
             placeholder="e.g. Dance like a chicken"
             className="flex-1 bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm" />
@@ -117,6 +117,12 @@ export function AdminPanel() {
             Add
           </button>
         </div>
+        {forfeits.length > 0 && (
+          <button onClick={() => confirm('Clear all forfeits?') && clearForfeits()}
+            className="w-full py-2 bg-gray-800 hover:bg-gray-700 rounded text-xs text-gray-400">
+            🗑️ Clear all forfeits
+          </button>
+        )}
       </div>
 
       <a href="/" className="block text-center text-sm text-blue-400 underline">View leaderboard →</a>

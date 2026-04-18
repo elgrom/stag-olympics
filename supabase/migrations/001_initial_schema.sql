@@ -94,3 +94,4 @@ create policy "Public update" on forfeits for update using (true);
 create policy "Public update" on players for update using (true);
 create policy "Public delete" on individual_scores for delete using (true);
 create policy "Public delete" on team_scores for delete using (true);
+create policy "Public delete" on forfeits for delete using (true);
