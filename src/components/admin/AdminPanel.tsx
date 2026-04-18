@@ -140,7 +140,7 @@ function DraftRow({ player, teamNames, onAssign }: {
   return (
     <div className="flex items-center gap-2 py-2 border-b border-gray-800">
       <div className="flex-1 min-w-0">
-        <span className="text-sm">{player.first_name} {player.last_name}</span>
+        <span className="text-sm">{player.nickname || player.first_name} {player.last_name}</span>
         <input
           defaultValue={player.nickname || ''}
           onBlur={e => setNickname(e.target.value.trim())}

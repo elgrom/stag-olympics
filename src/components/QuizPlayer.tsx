@@ -154,7 +154,7 @@ export function QuizPlayer({ players }: Props) {
                         ? 'bg-gray-900/50 text-gray-600 cursor-not-allowed'
                         : 'bg-gray-900 hover:bg-gray-800 text-white'
                     }`}>
-                    {player.first_name} {player.last_name}
+                    {displayName(player)} {player.last_name}
                     {player.nickname && <span className="ml-1 text-gray-500">({player.nickname})</span>}
                     {taken && <span className="ml-2 text-xs text-gray-500">✓ joined</span>}
                   </button>
@@ -170,7 +170,7 @@ export function QuizPlayer({ players }: Props) {
     return (
       <div className="px-4 pt-6 pb-24 text-center">
         <h1 className="text-2xl font-bold mb-2">🧠 How Well Do You Know Diccon?</h1>
-        <p className="text-gray-400 mb-6">Hi {pickedPlayer?.first_name}! Want a nickname for the leaderboard?</p>
+        <p className="text-gray-400 mb-6">Hi {pickedPlayer && displayName(pickedPlayer)}! Want a nickname for the leaderboard?</p>
         <input
           type="text"
           value={nicknameInput}
@@ -198,7 +198,7 @@ export function QuizPlayer({ players }: Props) {
     return (
       <div className="px-4 pt-6 pb-24 text-center">
         <h1 className="text-2xl font-bold mb-2">🧠 Quiz Complete!</h1>
-        <p className="text-gray-400 mb-6">{selectedPlayer?.first_name}, you scored:</p>
+        <p className="text-gray-400 mb-6">{selectedPlayer && displayName(selectedPlayer)}, you scored:</p>
         <div className="text-6xl font-bold text-yellow-400 mb-2">{correctCount}/10</div>
         <p className="text-gray-500 text-sm">Check the leaderboard for the full results</p>
       </div>
@@ -210,7 +210,7 @@ export function QuizPlayer({ players }: Props) {
     return (
       <div className="px-4 pt-6 pb-24 text-center">
         <h1 className="text-2xl font-bold mb-4">🧠 How Well Do You Know Diccon?</h1>
-        <p className="text-gray-400 mb-2">Hi {selectedPlayer?.first_name}!</p>
+        <p className="text-gray-400 mb-2">Hi {selectedPlayer && displayName(selectedPlayer)}!</p>
         <div className="animate-pulse text-gray-500 text-sm">Waiting for the quizmaster...</div>
       </div>
     )
