@@ -3,6 +3,7 @@ import { useEventData } from '../../hooks/useEventData'
 import { useForfeits } from '../../hooks/useForfeits'
 import { RoundControl } from './RoundControl'
 import { RoundScorer } from './RoundScorer'
+import { QuizAdmin } from './QuizAdmin'
 import type { Player } from '../../lib/types'
 import { supabase } from '../../lib/supabase'
 
@@ -32,7 +33,27 @@ export function AdminPanel() {
 
       <RoundControl rounds={rounds} />
 
-      {currentRound && <RoundScorer round={currentRound} teams={teams} players={players} />}
+      {currentRound?.number === 1 && (
+        <QuizAdmin
+          players={players}
+          onQuizComplete={async (results) => {
+            // Save quiz scores as individual scores
+            for (const r of results) {
+              if (r.score > 0) {
+                await supabase.from('individual_scores').insert({
+                  round_id: currentRound.id,
+                  player_id: r.playerId,
+                  points: r.score,
+                })
+              }
+            }
+          }}
+        />
+      )}
+
+      {currentRound && currentRound.number !== 1 && (
+        <RoundScorer round={currentRound} teams={teams} players={players} />
+      )}
 
       {teams.length === 2 && (
         <div className="bg-gray-900 rounded-lg p-4 mb-4">

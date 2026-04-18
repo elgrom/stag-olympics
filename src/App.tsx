@@ -9,6 +9,7 @@ import { TeamRosters } from './components/TeamRosters'
 import { ForfeitWheel } from './components/ForfeitWheel'
 import { BottomNav } from './components/BottomNav'
 import { AdminPanel } from './components/admin/AdminPanel'
+import { QuizPlayer } from './components/QuizPlayer'
 
 function MainApp() {
   const [activeTab, setActiveTab] = useState<'scores' | 'forfeits' | 'teams'>('scores')
@@ -16,9 +17,13 @@ function MainApp() {
   const { teams, players, rounds, totals, roundScores, individualRankings, currentRound } = useEventData()
   const { forfeits, markUsed } = useForfeits()
 
+  // Show quiz view when Round 1 is live
+  const isQuizActive = currentRound?.number === 1
+
   return (
     <div className="min-h-screen bg-gray-950 text-white">
-      {activeTab === 'scores' && (
+      {isQuizActive && <QuizPlayer players={players} />}
+      {!isQuizActive && activeTab === 'scores' && (
         <>
           <ScoreHeader teams={teams} totals={totals} currentRound={currentRound} />
           <div className="flex border-b border-gray-800 mx-4 mb-3">
@@ -35,9 +40,9 @@ function MainApp() {
           {scoreTab === 'individual' && <IndividualBoard rankings={individualRankings} teams={teams} />}
         </>
       )}
-      {activeTab === 'forfeits' && <ForfeitWheel forfeits={forfeits} onMarkUsed={markUsed} />}
-      {activeTab === 'teams' && <TeamRosters teams={teams} players={players} />}
-      <BottomNav active={activeTab} onChange={setActiveTab} />
+      {!isQuizActive && activeTab === 'forfeits' && <ForfeitWheel forfeits={forfeits} onMarkUsed={markUsed} />}
+      {!isQuizActive && activeTab === 'teams' && <TeamRosters teams={teams} players={players} />}
+      {!isQuizActive && <BottomNav active={activeTab} onChange={setActiveTab} />}
     </div>
   )
 }
