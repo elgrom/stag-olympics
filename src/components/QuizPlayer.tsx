@@ -80,23 +80,37 @@ export function QuizPlayer({ players }: Props) {
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
   }, [currentQuestion, revealed])
 
-  const submitAnswer = async (questionNumber: number, answerLabel: string) => {
-    if (!selectedPlayerId || answers[questionNumber]) return
+  const [pendingAnswer, setPendingAnswer] = useState<string | null>(null)
+  const pendingRef = useRef<string | null>(null)
 
-    const question = QUIZ_QUESTIONS.find(q => q.number === questionNumber)
+  // Keep ref in sync so the save effect can read it
+  useEffect(() => { pendingRef.current = pendingAnswer }, [pendingAnswer])
+
+  // Reset pending answer when a new question appears
+  useEffect(() => { setPendingAnswer(null) }, [currentQuestion])
+
+  // Save answer when timer hits 0 or answer is revealed
+  useEffect(() => {
+    if (!revealed && timeLeft > 0) return
+    if (!selectedPlayerId || currentQuestion === null) return
+    if (answers[currentQuestion]) return // already saved
+
+    const answer = pendingRef.current
+    if (!answer) return
+
+    const question = QUIZ_QUESTIONS.find(q => q.number === currentQuestion)
     if (!question) return
 
-    const isCorrect = answerLabel === question.correctAnswer
+    const isCorrect = answer === question.correctAnswer
+    setAnswers(prev => ({ ...prev, [currentQuestion]: answer }))
 
-    setAnswers(prev => ({ ...prev, [questionNumber]: answerLabel }))
-
-    await supabase.from('quiz_responses').insert({
+    supabase.from('quiz_responses').insert({
       player_id: selectedPlayerId,
-      question_number: questionNumber,
-      answer: answerLabel,
+      question_number: currentQuestion,
+      answer,
       is_correct: isCorrect,
     })
-  }
+  }, [revealed, timeLeft])
 
   // Player selection screen
   if (!selectedPlayerId) {
@@ -164,9 +178,10 @@ export function QuizPlayer({ players }: Props) {
   const question = QUIZ_QUESTIONS.find(q => q.number === currentQuestion)
   if (!question) return null
 
-  const myAnswer = answers[currentQuestion]
+  const savedAnswer = answers[currentQuestion]
+  const myAnswer = savedAnswer ?? pendingAnswer
   const timedOut = timeLeft === 0 && !myAnswer
-  const locked = !!myAnswer || timedOut || revealed
+  const locked = !!savedAnswer || timedOut || revealed
 
   return (
     <div className="px-4 pt-6 pb-24">
@@ -208,7 +223,7 @@ export function QuizPlayer({ players }: Props) {
             } else {
               className += 'bg-gray-900 text-gray-500'
             }
-          } else if (option.label === myAnswer) {
+          } else if (option.label === pendingAnswer) {
             className += 'bg-blue-700 text-white'
           } else if (locked) {
             className += 'bg-gray-900 text-gray-600'
@@ -219,7 +234,7 @@ export function QuizPlayer({ players }: Props) {
           return (
             <button
               key={option.label}
-              onClick={() => !locked && submitAnswer(currentQuestion, option.label)}
+              onClick={() => !locked && setPendingAnswer(option.label)}
               disabled={locked}
               className={className}
             >
