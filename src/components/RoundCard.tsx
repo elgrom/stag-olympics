@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { ROUND_INFO } from '../lib/round-info'
 import type { Round, Team } from '../lib/types'
 
 interface Props {
@@ -7,9 +9,11 @@ interface Props {
 }
 
 export function RoundCard({ round, teams, scores }: Props) {
+  const [expanded, setExpanded] = useState(false)
   const isLive = round.status === 'live'
   const isCompleted = round.status === 'completed'
   const isUpcoming = round.status === 'upcoming'
+  const info = ROUND_INFO[round.number]
 
   let winningTeamId: string | null = null
   if (isCompleted && scores && teams.length === 2) {
@@ -52,6 +56,37 @@ export function RoundCard({ round, teams, scores }: Props) {
       )}
       {isLive && <p className="text-xs text-gray-600 mt-2">{round.scoring_guidance}</p>}
       {isUpcoming && <p className="text-xs text-gray-600 mt-1">{round.max_team_points} pts available</p>}
+
+      {info && (
+        <>
+          <button onClick={() => setExpanded(!expanded)}
+            className="text-xs text-blue-400 mt-2">
+            {expanded ? '▼ Hide info' : '▶ How to play'}
+          </button>
+          {expanded && (
+            <div className="bg-gray-800 rounded p-3 mt-2 text-xs space-y-2">
+              <div>
+                <span className="text-gray-500 uppercase tracking-wide text-[10px]">Format</span>
+                <p className="text-gray-300 mt-0.5">{info.format}</p>
+              </div>
+              <div>
+                <span className="text-gray-500 uppercase tracking-wide text-[10px]">Scoring</span>
+                <p className="text-gray-300 mt-0.5">{info.scoring}</p>
+              </div>
+              {info.rules && (
+                <div>
+                  <span className="text-gray-500 uppercase tracking-wide text-[10px]">Game Rules</span>
+                  <ol className="text-gray-300 mt-1 space-y-1 list-decimal list-inside">
+                    {info.rules.map((rule, i) => (
+                      <li key={i} className="leading-snug">{rule}</li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      )}
     </div>
   )
 }
