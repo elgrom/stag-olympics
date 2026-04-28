@@ -234,6 +234,16 @@ function RoundInfoPanel({ info }: { info: import('../../lib/round-info').RoundIn
             <span className="text-gray-500 uppercase tracking-wide text-[10px]">Scoring</span>
             <p className="text-gray-300 mt-0.5">{info.scoring}</p>
           </div>
+          {info.rules && (
+            <div>
+              <span className="text-gray-500 uppercase tracking-wide text-[10px]">Game Rules</span>
+              <ol className="text-gray-300 mt-1 space-y-1 list-decimal list-inside">
+                {info.rules.map((rule, i) => (
+                  <li key={i} className="leading-snug">{rule}</li>
+                ))}
+              </ol>
+            </div>
+          )}
           <div>
             <span className="text-gray-500 uppercase tracking-wide text-[10px]">Kit needed</span>
             <p className="text-gray-300 mt-0.5">{info.kit}</p>

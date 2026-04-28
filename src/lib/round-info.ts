@@ -4,6 +4,7 @@ export interface RoundInfo {
   scoring: string
   kit: string
   drinking: string
+  rules?: string[]
 }
 
 export const ROUND_INFO: Record<number, RoundInfo> = {
@@ -18,6 +19,17 @@ export const ROUND_INFO: Record<number, RoundInfo> = {
     scoring: '3 pts to winning team per match, 1 pt to loser. 9 pts available. Winning players get individual points.',
     kit: 'Petanque set (check if castle has one)',
     drinking: 'Losers of each match take a penalty drink',
+    rules: [
+      'Flip a coin — winner picks who throws the cochonnet (jack) first.',
+      'The cochonnet must land 6-10 metres away. If it\'s too short or out of bounds, the other team throws it.',
+      'The team that threw the cochonnet throws the first boule, trying to land it as close as possible.',
+      'The OTHER team then throws until they get a boule closer than the best opposing boule (or run out of boules).',
+      'Once a team is closest, the other team throws. Keep alternating like this.',
+      'When all boules are thrown, the closest team scores: 1 point per boule that is nearer than the opponent\'s best.',
+      'First team to 13 points wins the match. (For time, you can also play a fixed number of ends.)',
+      'Boules can be thrown to knock opponents\' boules away — this is encouraged.',
+      'Feet must stay together inside a small circle (or behind a line) when throwing.',
+    ],
   },
   3: {
     format: 'Pairs face each other, step back after each successful catch. Last pair standing scores for their team.',
@@ -36,6 +48,17 @@ export const ROUND_INFO: Record<number, RoundInfo> = {
     scoring: '3 pts to winning team per match, 1 pt to loser. 9 pts available. Winning players get individual points.',
     kit: 'Rackets and balls (castle should have them — check in advance)',
     drinking: 'Losers of each match take a penalty drink. Spectators heckle from the sideline with beers.',
+    rules: [
+      'Doubles: both players on a team take turns hitting. Alternate who serves each game.',
+      'Rally scoring to 11 — every rally wins a point regardless of who served.',
+      'No deuces — first to 11 wins outright.',
+      'Serve underhand from behind the baseline. Ball must bounce once on each side (serve + return).',
+      'After the serve and return, volleys (hitting before a bounce) are allowed.',
+      'Ball must land inside the lines (or on the line). Out = point to the other team.',
+      'If it hits the net and goes over, play continues. If it hits the net and doesn\'t clear, point to the other team.',
+      'Switch sides at 6 points (or halfway if playing a shorter game).',
+      'Keep it friendly — the admin\'s call is final on disputed line calls.',
+    ],
   },
   6: {
     format: 'Each team has 10 minutes to create the best portrait or sculpture of Diccon using only items found in the castle grounds. Diccon judges both entries.',
