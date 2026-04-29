@@ -118,6 +118,12 @@ export function ForfeitCeremonyOverlay({ state, forfeits, onMarkUsed, onUpdateCe
             <p className="text-sm text-gray-400 mb-2">{state.loser_name} must do:</p>
             <p className="text-2xl font-bold text-red-400 mb-4">{state.loser_forfeit}</p>
             <p className="text-4xl">🔥</p>
+            {nextPenalty && (
+              <div className="mt-6 bg-gray-800 rounded-lg p-3">
+                <p className="text-xs text-gray-500 mb-1">Or take the penalty instead:</p>
+                <p className="text-lg font-bold text-orange-400">⚠️ {nextPenalty}</p>
+              </div>
+            )}
           </div>
         )}
 
