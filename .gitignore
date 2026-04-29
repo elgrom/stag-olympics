@@ -7,3 +7,4 @@ dist/
 .vercel
 *.pdf
 *.xlsx
+.env.vercel
