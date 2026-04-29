@@ -142,6 +142,14 @@ export function ForfeitCeremonyOverlay({ state, forfeits, onMarkUsed, onUpdateCe
             )}
           </div>
         )}
+
+        {/* Close button on result/done phases */}
+        {['loser_forfeit', 'loser_penalty', 'done'].includes(state.phase) && (
+          <button onClick={() => onUpdateCeremony({ phase: 'idle' })}
+            className="mt-8 px-6 py-2 bg-gray-800 hover:bg-gray-700 rounded text-sm text-gray-400">
+            Close
+          </button>
+        )}
       </div>
     </div>
   )
