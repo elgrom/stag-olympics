@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 
 export function useRealtimeTable<T extends { id: string }>(
@@ -6,6 +6,7 @@ export function useRealtimeTable<T extends { id: string }>(
   orderBy?: { column: string; ascending?: boolean },
 ): { rows: T[]; refetch: () => void } {
   const [rows, setRows] = useState<T[]>([])
+  const pollRef = useRef<ReturnType<typeof setInterval>>(undefined)
 
   const fetchData = useCallback(() => {
     const query = supabase.from(table).select('*')
@@ -34,7 +35,13 @@ export function useRealtimeTable<T extends { id: string }>(
         })
       .subscribe()
 
-    return () => { supabase.removeChannel(channel) }
+    // Poll every 10s as fallback for unreliable realtime (bulk deletes, dropped events)
+    pollRef.current = setInterval(fetchData, 10000)
+
+    return () => {
+      supabase.removeChannel(channel)
+      if (pollRef.current) clearInterval(pollRef.current)
+    }
   }, [table, orderBy?.column, orderBy?.ascending])
 
   return { rows, refetch: fetchData }
