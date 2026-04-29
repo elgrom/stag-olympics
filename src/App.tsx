@@ -21,7 +21,7 @@ function MainApp() {
   usePageTitle('🏆 SO - Leaderboard')
   const [activeTab, setActiveTab] = useState<'scores' | 'forfeits' | 'teams'>('scores')
   const [scoreTab, setScoreTab] = useState<'teams' | 'individual'>('teams')
-  const { teams, players, rounds, totals, roundScores, individualRankings, currentRound } = useEventData()
+  const { teams, players, rounds, totals, roundScores, individualRankings, currentRound, teamScores, individualScores } = useEventData()
   const { forfeits, markUsed } = useForfeits()
   const { state: ceremonyState, updateCeremony } = useForfeitCeremony()
 
@@ -49,6 +49,9 @@ function MainApp() {
       {activeTab === 'forfeits' && <ForfeitWheel forfeits={forfeits} onMarkUsed={markUsed} />}
       {activeTab === 'teams' && <TeamRosters teams={teams} players={players} />}
       <BottomNav active={activeTab} onChange={setActiveTab} />
+      <p className="text-center text-[10px] text-gray-700 py-2">
+        debug: {teamScores.length} team_scores, {individualScores.length} indiv_scores, {teams.length} teams, {rounds.length} rounds
+      </p>
     </div>
   )
 }

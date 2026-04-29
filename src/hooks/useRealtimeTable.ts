@@ -13,8 +13,13 @@ export function useRealtimeTable<T extends { id: string }>(
     if (orderBy) {
       query.order(orderBy.column, { ascending: orderBy.ascending ?? true })
     }
-    query.then(({ data }) => {
-      if (data) setRows(data as T[])
+    query.then(({ data, error }) => {
+      if (error) {
+        console.error(`[useRealtimeTable] ${table} fetch error:`, error.message)
+        return
+      }
+      // Always set rows — even if data is empty array
+      setRows((data ?? []) as T[])
     })
   }, [table, orderBy?.column, orderBy?.ascending])
 
