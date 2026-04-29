@@ -82,6 +82,19 @@ export async function mockSupabase(page: Page) {
     return route.fulfill({ json: [] })
   })
 
+  await page.route(`${supabaseUrl}/rest/v1/ceremony_state*`, route => {
+    const idle = { id: 'cs1', phase: 'idle', winner_name: null, loser_name: null, stag_forfeit: null, loser_forfeit: null, loser_penalty: null, updated_at: '2026-01-01T00:00:00Z' }
+    if (route.request().method() === 'GET') {
+      const accept = route.request().headers()['accept'] ?? ''
+      // .single() sends Accept: application/vnd.pgrst.object+json
+      if (accept.includes('vnd.pgrst.object')) {
+        return route.fulfill({ json: idle, headers: { 'content-range': '0-0/1' } })
+      }
+      return route.fulfill({ json: [idle] })
+    }
+    return route.fulfill({ json: [] })
+  })
+
   // Block realtime websocket so it doesn't hang
   await page.route(`${supabaseUrl}/realtime/**`, route => route.abort())
 }

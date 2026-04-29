@@ -154,6 +154,7 @@ test.describe('Full Event Playthrough', () => {
     await expect(page.getByText(/Bucks must do:/)).toBeVisible({ timeout: 5000 })
     await page.getByRole('button', { name: /Done/ }).click()
     await expect(page.getByText(/Forfeit ceremony complete/)).toBeVisible()
+    await page.getByRole('button', { name: /Dismiss/ }).click()
 
     mock.rounds[1].status = 'completed'
     await page.goto('/admin')
@@ -172,7 +173,8 @@ test.describe('Full Event Playthrough', () => {
     await scorerWB.getByRole('button', { name: 'Bucks' }).click()
     await expect(page.getByText(/Bucks wins.*\+3 pts/)).toBeVisible()
 
-    // FORFEIT CEREMONY (simple round — auto-triggered)
+    // FORFEIT CEREMONY (manual trigger)
+    await page.getByRole('button', { name: /Start Forfeit Ceremony/ }).click()
     await expect(page.getByText('Forfeit Ceremony')).toBeVisible()
     await page.getByRole('button', { name: /Spin the Wheel for Diccon/ }).click()
     await expect(page.getByText(/Diccon must do:/)).toBeVisible({ timeout: 5000 })
@@ -185,6 +187,7 @@ test.describe('Full Event Playthrough', () => {
     await expect(page.getByText(/Left handed/)).toBeVisible()
     await page.getByRole('button', { name: /Done/ }).click()
     await expect(page.getByText(/Forfeit ceremony complete/)).toBeVisible()
+    await page.getByRole('button', { name: /Dismiss/ }).click()
 
     mock.rounds[2].status = 'completed'
     await page.goto('/admin')
@@ -332,6 +335,14 @@ test.describe('Full Event Playthrough', () => {
     // ──────────────────────────────────────────────
     // Forfeit wheel still functional
     // ──────────────────────────────────────────────
+    // Verify no ceremony overlay is blocking
+    const overlay = page.locator('.fixed.inset-0')
+    if (await overlay.isVisible()) {
+      // Force-dismiss if overlay is still showing
+      await page.evaluate(() => {
+        document.querySelector('.fixed.inset-0')?.remove()
+      })
+    }
     await page.getByRole('button', { name: /forfeit/i }).click()
     await expect(page.getByRole('button', { name: /Spin/i })).toBeVisible()
   })

@@ -3,7 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { ROUND_INFO } from '../../lib/round-info'
 import { displayName } from '../../lib/types'
 import type { Round, Team, Player, Forfeit } from '../../lib/types'
-import type { ForfeitEvent } from '../../hooks/useForfeitCeremony'
+import type { CeremonyPhase } from '../../hooks/useForfeitCeremony'
 
 interface Props {
   round: Round
@@ -11,7 +11,7 @@ interface Props {
   players: Player[]
   forfeits: Forfeit[]
   onMarkForfeitUsed: (id: string) => void
-  onBroadcastForfeit: (event: ForfeitEvent) => void
+  onCeremonyUpdate: (fields: { phase?: CeremonyPhase; winner_name?: string; loser_name?: string; stag_forfeit?: string; loser_forfeit?: string; loser_penalty?: string }) => void
 }
 
 // How many players per side for each round with individual scoring
@@ -21,7 +21,7 @@ const PLAYERS_PER_SIDE: Record<number, number> = {
   5: 2, // Tennis 2v2
 }
 
-export function RoundScorer({ round, teams, players, forfeits, onMarkForfeitUsed, onBroadcastForfeit }: Props) {
+export function RoundScorer({ round, teams, players, forfeits, onMarkForfeitUsed, onCeremonyUpdate }: Props) {
   const [matchNumber, setMatchNumber] = useState(1)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
@@ -91,12 +91,7 @@ export function RoundScorer({ round, teams, players, forfeits, onMarkForfeitUsed
     setMessage(`✅ ${winnerName} wins${round.has_sub_matches ? ` match ${matchNumber}` : ''}! (+${round.points_per_win} pts)`)
     setLastWinnerId(winningTeamId)
 
-    // For simple rounds, go straight to forfeit ceremony
-    if (!round.has_sub_matches) {
-      setForfeitPhase('stag')
-      const loserName = teams.find(t => t.id !== winningTeamId)!.name
-      onBroadcastForfeit({ type: 'start', winnerName, loserName })
-    }
+    // Don't auto-start ceremony — admin triggers it manually
 
     if (round.has_sub_matches) setMatchNumber(prev => prev + 1)
     setSaving(false)
@@ -220,13 +215,13 @@ export function RoundScorer({ round, teams, players, forfeits, onMarkForfeitUsed
 
       {message && <p className="text-xs mt-2 text-center">{message}</p>}
 
-      {/* For sub-match rounds: manual trigger for forfeit ceremony after all matches */}
-      {round.has_sub_matches && forfeitPhase === 'none' && lastWinnerId && (
+      {/* Manual trigger for forfeit ceremony after scoring */}
+      {forfeitPhase === 'none' && lastWinnerId && (
         <button onClick={() => {
           setForfeitPhase('stag')
           const winnerName = teams.find(t => t.id === lastWinnerId)!.name
           const loserName = teams.find(t => t.id !== lastWinnerId)!.name
-          onBroadcastForfeit({ type: 'start', winnerName, loserName })
+          onCeremonyUpdate({ phase: 'stag_spinning', winner_name: winnerName, loser_name: loserName, stag_forfeit: null, loser_forfeit: null, loser_penalty: null })
         }}
           className="w-full py-2 mt-3 bg-yellow-700 hover:bg-yellow-600 rounded text-sm font-medium">
           🎡 Start Forfeit Ceremony
@@ -244,11 +239,10 @@ export function RoundScorer({ round, teams, players, forfeits, onMarkForfeitUsed
               <p className="text-xs text-gray-400 mb-2">Step 1: Spin for Diccon (the stag)</p>
               {!forfeitResult ? (
                 <button onClick={() => {
-                  onBroadcastForfeit({ type: 'stag_spinning' })
-                  // Small delay so public screen shows spinning before result
+                  onCeremonyUpdate({ phase: 'stag_spinning' })
                   setTimeout(() => {
                     const result = spinForfeit()
-                    if (result) onBroadcastForfeit({ type: 'stag_result', forfeit: result })
+                    if (result) onCeremonyUpdate({ phase: 'stag_result', stag_forfeit: result })
                   }, 1500)
                 }}
                   className="w-full py-3 bg-yellow-600 hover:bg-yellow-500 rounded font-bold text-sm">
@@ -258,7 +252,7 @@ export function RoundScorer({ round, teams, players, forfeits, onMarkForfeitUsed
                 <div className="text-center">
                   <p className="text-xs text-gray-500 mb-1">Diccon must do:</p>
                   <p className="text-lg font-bold text-yellow-400">{forfeitResult}</p>
-                  <button onClick={() => { setForfeitResult(null); setForfeitPhase('loser') }}
+                  <button onClick={() => { setForfeitResult(null); setForfeitPhase('loser'); onCeremonyUpdate({ phase: 'stag_result' }) }}
                     className="mt-3 w-full py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm">
                     Next → Losing Team
                   </button>
@@ -282,8 +276,7 @@ export function RoundScorer({ round, teams, players, forfeits, onMarkForfeitUsed
                   </button>
                   <button onClick={() => {
                     setLoserChoice('penalty')
-                    const loserName = teams.find(t => t.id !== lastWinnerId)!.name
-                    onBroadcastForfeit({ type: 'loser_penalty', teamName: loserName, penalty: nextPenalty ?? 'No penalty' })
+                    onCeremonyUpdate({ phase: 'loser_penalty', loser_penalty: nextPenalty ?? 'No penalty' })
                   }}
                     className="flex-1 py-3 bg-orange-700 hover:bg-orange-600 rounded font-medium text-sm">
                     ⚠️ Take Penalty
@@ -293,11 +286,10 @@ export function RoundScorer({ round, teams, players, forfeits, onMarkForfeitUsed
 
               {loserChoice === 'forfeit' && !forfeitResult && (
                 <button onClick={() => {
-                  const loserName = teams.find(t => t.id !== lastWinnerId)!.name
-                  onBroadcastForfeit({ type: 'loser_spinning', teamName: loserName })
+                  onCeremonyUpdate({ phase: 'loser_spinning' })
                   setTimeout(() => {
                     const result = spinForfeit()
-                    if (result) onBroadcastForfeit({ type: 'loser_forfeit', teamName: loserName, forfeit: result })
+                    if (result) onCeremonyUpdate({ phase: 'loser_forfeit', loser_forfeit: result })
                   }, 1500)
                 }}
                   className="w-full py-3 bg-red-600 hover:bg-red-500 rounded font-bold text-sm">
@@ -309,7 +301,10 @@ export function RoundScorer({ round, teams, players, forfeits, onMarkForfeitUsed
                 <div className="text-center">
                   <p className="text-xs text-gray-500 mb-1">{teams.find(t => t.id !== lastWinnerId)?.name} must do:</p>
                   <p className="text-lg font-bold text-red-400">{forfeitResult}</p>
-                  <button onClick={() => { setForfeitPhase('done'); onBroadcastForfeit({ type: 'done' }) }}
+                  <button onClick={() => {
+                    setForfeitPhase('done')
+                    onCeremonyUpdate({ phase: 'done' })
+                  }}
                     className="mt-3 w-full py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm">
                     Done ✓
                   </button>
@@ -322,7 +317,10 @@ export function RoundScorer({ round, teams, players, forfeits, onMarkForfeitUsed
                     {teams.find(t => t.id !== lastWinnerId)?.name} takes the penalty into R{nextRoundNumber}:
                   </p>
                   <p className="text-lg font-bold text-orange-400">⚠️ {nextPenalty ?? 'No penalty defined'}</p>
-                  <button onClick={() => { setForfeitPhase('done'); onBroadcastForfeit({ type: 'done' }) }}
+                  <button onClick={() => {
+                    setForfeitPhase('done')
+                    onCeremonyUpdate({ phase: 'done' })
+                  }}
                     className="mt-3 w-full py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm">
                     Done ✓
                   </button>
@@ -334,7 +332,11 @@ export function RoundScorer({ round, teams, players, forfeits, onMarkForfeitUsed
           {/* Step 3: Done */}
           {forfeitPhase === 'done' && (
             <div className="text-center">
-              <p className="text-xs text-green-400">✅ Forfeit ceremony complete — end the round when ready.</p>
+              <p className="text-xs text-green-400 mb-2">✅ Forfeit ceremony complete — end the round when ready.</p>
+              <button onClick={() => onCeremonyUpdate({ phase: 'idle' })}
+                className="w-full py-2 bg-gray-700 hover:bg-gray-600 rounded text-xs text-gray-400">
+                Dismiss from public screen
+              </button>
             </div>
           )}
         </div>

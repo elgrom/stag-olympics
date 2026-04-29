@@ -1,83 +1,100 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 
-export type ForfeitEvent =
-  | { type: 'start'; winnerName: string; loserName: string }
-  | { type: 'stag_spinning' }
-  | { type: 'stag_result'; forfeit: string }
-  | { type: 'loser_spinning'; teamName: string }
-  | { type: 'loser_forfeit'; teamName: string; forfeit: string }
-  | { type: 'loser_penalty'; teamName: string; penalty: string }
-  | { type: 'done' }
-  | { type: 'reset' }
+export type CeremonyPhase = 'idle' | 'stag_spinning' | 'stag_result' | 'loser_spinning' | 'loser_forfeit' | 'loser_penalty' | 'done'
 
-export interface ForfeitCeremonyState {
-  active: boolean
-  phase: 'idle' | 'stag_spinning' | 'stag_result' | 'loser_spinning' | 'loser_forfeit' | 'loser_penalty' | 'done'
-  winnerName: string | null
-  loserName: string | null
-  stagForfeit: string | null
-  loserForfeit: string | null
-  loserPenalty: string | null
+export interface CeremonyState {
+  id: string
+  phase: CeremonyPhase
+  winner_name: string | null
+  loser_name: string | null
+  stag_forfeit: string | null
+  loser_forfeit: string | null
+  loser_penalty: string | null
+  updated_at: string
 }
 
-const INITIAL_STATE: ForfeitCeremonyState = {
-  active: false,
+const IDLE: Omit<CeremonyState, 'id' | 'updated_at'> = {
   phase: 'idle',
-  winnerName: null,
-  loserName: null,
-  stagForfeit: null,
-  loserForfeit: null,
-  loserPenalty: null,
+  winner_name: null,
+  loser_name: null,
+  stag_forfeit: null,
+  loser_forfeit: null,
+  loser_penalty: null,
 }
 
 export function useForfeitCeremony() {
-  const [state, setState] = useState<ForfeitCeremonyState>(INITIAL_STATE)
+  const [state, setState] = useState<CeremonyState | null>(null)
+  const pollingRef = useRef<ReturnType<typeof setInterval>>(undefined)
 
-  function applyEvent(ev: ForfeitEvent) {
-    setState(prev => {
-      switch (ev.type) {
-        case 'start':
-          return { ...INITIAL_STATE, active: true, phase: 'idle', winnerName: ev.winnerName, loserName: ev.loserName }
-        case 'stag_spinning':
-          return { ...prev, phase: 'stag_spinning' }
-        case 'stag_result':
-          return { ...prev, phase: 'stag_result', stagForfeit: ev.forfeit }
-        case 'loser_spinning':
-          return { ...prev, phase: 'loser_spinning' }
-        case 'loser_forfeit':
-          return { ...prev, phase: 'loser_forfeit', loserForfeit: ev.forfeit }
-        case 'loser_penalty':
-          return { ...prev, phase: 'loser_penalty', loserPenalty: ev.penalty }
-        case 'done':
-          return { ...prev, phase: 'done' }
-        case 'reset':
-          return INITIAL_STATE
-        default:
-          return prev
-      }
-    })
-  }
+  const fetchState = useCallback(async () => {
+    const { data } = await supabase
+      .from('ceremony_state')
+      .select('*')
+      .limit(1)
+      .single()
+    if (data) setState(data as CeremonyState)
+  }, [])
 
+  // Initial fetch + realtime subscription
   useEffect(() => {
-    const channel = supabase.channel('forfeit-ceremony')
-      .on('broadcast', { event: 'forfeit_event' }, ({ payload }) => {
-        applyEvent(payload as ForfeitEvent)
-      })
+    fetchState()
+
+    const channel = supabase
+      .channel('ceremony-changes')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'ceremony_state' },
+        (payload) => {
+          setState(payload.new as CeremonyState)
+        })
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [])
+  }, [fetchState])
 
-  const broadcast = useCallback(async (event: ForfeitEvent) => {
-    await supabase.channel('forfeit-ceremony').send({
-      type: 'broadcast',
-      event: 'forfeit_event',
-      payload: event,
+  // Poll every 1.5s when ceremony is active (fallback for unreliable realtime)
+  useEffect(() => {
+    const isActive = state && state.phase !== 'idle'
+    if (isActive) {
+      pollingRef.current = setInterval(fetchState, 1500)
+    } else if (pollingRef.current) {
+      clearInterval(pollingRef.current)
+      pollingRef.current = undefined
+    }
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current)
+    }
+  }, [state?.phase, fetchState])
+
+  /** Update ceremony state in the database */
+  const updateCeremony = useCallback(async (fields: Partial<Omit<CeremonyState, 'id' | 'updated_at'>>) => {
+    if (!state) return
+    const update = { ...fields, updated_at: new Date().toISOString() }
+    await supabase
+      .from('ceremony_state')
+      .update(update)
+      .eq('id', state.id)
+    // Optimistic local update
+    setState(prev => prev ? { ...prev, ...update } : prev)
+  }, [state])
+
+  /** Start a new ceremony */
+  const startCeremony = useCallback(async (winnerName: string, loserName: string) => {
+    await updateCeremony({
+      phase: 'idle',
+      winner_name: winnerName,
+      loser_name: loserName,
+      stag_forfeit: null,
+      loser_forfeit: null,
+      loser_penalty: null,
     })
-    // Also update local state (for admin)
-    applyEvent(event)
-  }, [])
+  }, [updateCeremony])
 
-  return { state, broadcast }
+  /** Reset ceremony to idle */
+  const resetCeremony = useCallback(async () => {
+    await updateCeremony(IDLE)
+  }, [updateCeremony])
+
+  const isActive = state !== null && state.phase !== 'idle'
+
+  return { state, isActive, updateCeremony, startCeremony, resetCeremony, refetch: fetchState }
 }

@@ -12,7 +12,7 @@ export function AdminPanel() {
   useEffect(() => { document.title = '⚙️ SO - Admin' }, [])
   const { teams, players, rounds, totals, currentRound, refetchRounds } = useEventData()
   const { forfeits, addForfeit, clearAll: clearForfeits } = useForfeits()
-  const { broadcast: broadcastForfeit } = useForfeitCeremony()
+  const { updateCeremony, resetCeremony } = useForfeitCeremony()
   const [forfeitText, setForfeitText] = useState('')
 
   const handleAddForfeit = async () => {
@@ -53,7 +53,7 @@ export function AdminPanel() {
         </div>
       )}
 
-      <RoundControl rounds={rounds} onRefetch={refetchRounds} />
+      <RoundControl rounds={rounds} onRefetch={refetchRounds} onResetCeremony={resetCeremony} />
 
       {currentRound?.number === 1 && (
         <QuizAdmin
@@ -77,7 +77,7 @@ export function AdminPanel() {
         <RoundScorer round={currentRound} teams={teams} players={players}
           forfeits={forfeits} onMarkForfeitUsed={(id) => {
             supabase.from('forfeits').update({ is_used: true }).eq('id', id)
-          }} onBroadcastForfeit={broadcastForfeit} />
+          }} onCeremonyUpdate={updateCeremony} />
       )}
 
       {teams.length === 2 && (

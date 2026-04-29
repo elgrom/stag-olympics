@@ -186,6 +186,21 @@ export function createStatefulMock() {
         return route.fulfill({ json: [] })
       })
 
+      // --- CEREMONY STATE ---
+      const ceremonyState = { id: 'cs1', phase: 'idle', winner_name: null, loser_name: null, stag_forfeit: null, loser_forfeit: null, loser_penalty: null, updated_at: '2026-01-01T00:00:00Z' }
+      await page.route(`${supabaseUrl}/rest/v1/ceremony_state*`, route => {
+        if (route.request().method() === 'PATCH') {
+          const body = route.request().postDataJSON()
+          Object.assign(ceremonyState, body)
+          return route.fulfill({ json: [] })
+        }
+        const accept = route.request().headers()['accept'] ?? ''
+        if (accept.includes('vnd.pgrst.object')) {
+          return route.fulfill({ json: ceremonyState, headers: { 'content-range': '0-0/1' } })
+        }
+        return route.fulfill({ json: [ceremonyState] })
+      })
+
       // Block realtime websocket
       await page.route(`${supabaseUrl}/realtime/**`, route => route.abort())
     },

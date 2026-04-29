@@ -25,6 +25,7 @@ function MainApp() {
   const { forfeits, markUsed } = useForfeits()
   const { state: ceremonyState } = useForfeitCeremony()
 
+
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       <ForfeitCeremonyOverlay state={ceremonyState} />
