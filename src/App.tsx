@@ -23,12 +23,12 @@ function MainApp() {
   const [scoreTab, setScoreTab] = useState<'teams' | 'individual'>('teams')
   const { teams, players, rounds, totals, roundScores, individualRankings, currentRound } = useEventData()
   const { forfeits, markUsed } = useForfeits()
-  const { state: ceremonyState } = useForfeitCeremony()
-
+  const { state: ceremonyState, updateCeremony } = useForfeitCeremony()
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
-      <ForfeitCeremonyOverlay state={ceremonyState} />
+      <ForfeitCeremonyOverlay state={ceremonyState} forfeits={forfeits}
+        onMarkUsed={markUsed} onUpdateCeremony={updateCeremony} />
       {activeTab === 'scores' && (
         <>
           <ScoreHeader teams={teams} totals={totals} currentRound={currentRound} />

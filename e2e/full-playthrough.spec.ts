@@ -137,22 +137,13 @@ test.describe('Full Event Playthrough', () => {
     // FORFEIT CEREMONY (sub-match round — manual trigger)
     await expect(page.getByRole('button', { name: /Start Forfeit Ceremony/ })).toBeVisible()
     await page.getByRole('button', { name: /Start Forfeit Ceremony/ }).click()
-
-    // Step 1: Spin for Diccon (1.5s delay for broadcast animation)
     await expect(page.getByText('Forfeit Ceremony')).toBeVisible()
-    await expect(page.getByText(/Spin for Diccon/)).toBeVisible()
-    await page.getByRole('button', { name: /Spin the Wheel for Diccon/ }).click()
-    await expect(page.getByText(/Diccon must do:/)).toBeVisible({ timeout: 5000 })
 
-    // Move to losing team step
-    await page.getByRole('button', { name: /Next.*Losing Team/ }).click()
+    // Admin advances past the stag spin (skip in test since spin is on public screen)
+    await page.getByRole('button', { name: /Skip.*Losing Team/ }).click()
 
-    // Step 2: Losing team (Bucks) chooses — pick forfeit
-    await expect(page.getByText(/Bucks.*forfeit or penalty/)).toBeVisible()
-    await page.getByRole('button', { name: /Spin a Forfeit/ }).click()
-    await page.getByRole('button', { name: /Spin the Wheel/ }).click()
-    await expect(page.getByText(/Bucks must do:/)).toBeVisible({ timeout: 5000 })
-    await page.getByRole('button', { name: /Done/ }).click()
+    // Admin assigns penalty for the losing team
+    await page.getByRole('button', { name: /Assign Penalty/ }).click()
     await expect(page.getByText(/Forfeit ceremony complete/)).toBeVisible()
     await page.getByRole('button', { name: /Dismiss/ }).click()
 
@@ -176,16 +167,10 @@ test.describe('Full Event Playthrough', () => {
     // FORFEIT CEREMONY (manual trigger)
     await page.getByRole('button', { name: /Start Forfeit Ceremony/ }).click()
     await expect(page.getByText('Forfeit Ceremony')).toBeVisible()
-    await page.getByRole('button', { name: /Spin the Wheel for Diccon/ }).click()
-    await expect(page.getByText(/Diccon must do:/)).toBeVisible({ timeout: 5000 })
-    await page.getByRole('button', { name: /Next.*Losing Team/ }).click()
 
-    // Losing team (Stags) takes the penalty this time
-    await expect(page.getByText(/Stags.*forfeit or penalty/)).toBeVisible()
-    await page.getByRole('button', { name: /Take Penalty/ }).click()
-    // Penalty for R4 is "Left handed"
-    await expect(page.getByText(/Left handed/)).toBeVisible()
-    await page.getByRole('button', { name: /Done/ }).click()
+    // Admin skips stag spin and assigns penalty for the losing team
+    await page.getByRole('button', { name: /Skip.*Losing Team/ }).click()
+    await page.getByRole('button', { name: /Assign Penalty/ }).click()
     await expect(page.getByText(/Forfeit ceremony complete/)).toBeVisible()
     await page.getByRole('button', { name: /Dismiss/ }).click()
 

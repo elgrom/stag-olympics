@@ -1,16 +1,14 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { ROUND_INFO } from '../../lib/round-info'
 import { displayName } from '../../lib/types'
-import type { Round, Team, Player, Forfeit } from '../../lib/types'
+import type { Round, Team, Player } from '../../lib/types'
 import type { CeremonyPhase } from '../../hooks/useForfeitCeremony'
 
 interface Props {
   round: Round
   teams: Team[]
   players: Player[]
-  forfeits: Forfeit[]
-  onMarkForfeitUsed: (id: string) => void
   onCeremonyUpdate: (fields: { phase?: CeremonyPhase; winner_name?: string; loser_name?: string; stag_forfeit?: string; loser_forfeit?: string; loser_penalty?: string }) => void
 }
 
@@ -21,14 +19,12 @@ const PLAYERS_PER_SIDE: Record<number, number> = {
   5: 2, // Tennis 2v2
 }
 
-export function RoundScorer({ round, teams, players, forfeits, onMarkForfeitUsed, onCeremonyUpdate }: Props) {
+export function RoundScorer({ round, teams, players, onCeremonyUpdate }: Props) {
   const [matchNumber, setMatchNumber] = useState(1)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [forfeitPhase, setForfeitPhase] = useState<'none' | 'stag' | 'loser' | 'done'>('none')
   const [lastWinnerId, setLastWinnerId] = useState<string | null>(null)
-  const [forfeitResult, setForfeitResult] = useState<string | null>(null)
-  const [loserChoice, setLoserChoice] = useState<'forfeit' | 'penalty' | null>(null)
 
   // Lineups: { [matchNumber]: { [teamId]: playerId[] } }
   const [lineups, setLineups] = useState<Record<number, Record<string, string[]>>>({})
@@ -96,18 +92,6 @@ export function RoundScorer({ round, teams, players, forfeits, onMarkForfeitUsed
     if (round.has_sub_matches) setMatchNumber(prev => prev + 1)
     setSaving(false)
   }
-
-  const spinForfeit = useCallback((): string | null => {
-    const available = forfeits.filter(f => !f.is_used)
-    if (available.length === 0) {
-      setForfeitResult('No forfeits left!')
-      return null
-    }
-    const chosen = available[Math.floor(Math.random() * available.length)]
-    setForfeitResult(chosen.text)
-    onMarkForfeitUsed(chosen.id)
-    return chosen.text
-  }, [forfeits, onMarkForfeitUsed])
 
   const nextRoundNumber = round.number + 1
   const nextRoundInfo = ROUND_INFO[nextRoundNumber]
@@ -221,124 +205,81 @@ export function RoundScorer({ round, teams, players, forfeits, onMarkForfeitUsed
           setForfeitPhase('stag')
           const winnerName = teams.find(t => t.id === lastWinnerId)!.name
           const loserName = teams.find(t => t.id !== lastWinnerId)!.name
-          onCeremonyUpdate({ phase: 'stag_spinning', winner_name: winnerName, loser_name: loserName })
+          onCeremonyUpdate({ phase: 'stag_spin', winner_name: winnerName, loser_name: loserName })
         }}
           className="w-full py-2 mt-3 bg-yellow-700 hover:bg-yellow-600 rounded text-sm font-medium">
           🎡 Start Forfeit Ceremony
         </button>
       )}
 
-      {/* ── FORFEIT CEREMONY ── */}
+      {/* ── FORFEIT CEREMONY (admin controls) ── */}
       {forfeitPhase !== 'none' && (
-        <div className="bg-gray-800 rounded-lg p-4 mt-3 space-y-3">
-          <h4 className="font-bold text-sm text-yellow-400">🎡 Forfeit Ceremony</h4>
+        <AdminCeremonyControls
+          forfeitPhase={forfeitPhase}
+          loserName={teams.find(t => t.id !== lastWinnerId)?.name ?? ''}
+          nextPenalty={nextPenalty}
+          nextRoundNumber={nextRoundNumber}
+          onAdvanceToLoser={() => { setForfeitPhase('loser'); onCeremonyUpdate({ phase: 'loser_choice' }) }}
+          onAssignPenalty={() => { setForfeitPhase('done'); onCeremonyUpdate({ phase: 'loser_penalty', loser_penalty: nextPenalty ?? 'No penalty' }) }}
+          onDone={() => { setForfeitPhase('done'); onCeremonyUpdate({ phase: 'done' }) }}
+          onDismiss={() => onCeremonyUpdate({ phase: 'idle' })}
+          ceremonyUpdate={onCeremonyUpdate}
+        />
+      )}
+    </div>
+  )
+}
 
-          {/* Step 1: Spin for Diccon */}
-          {forfeitPhase === 'stag' && (
-            <div>
-              <p className="text-xs text-gray-400 mb-2">Step 1: Spin for Diccon (the stag)</p>
-              {!forfeitResult ? (
-                <button onClick={() => {
-                  onCeremonyUpdate({ phase: 'stag_spinning' })
-                  setTimeout(() => {
-                    const result = spinForfeit()
-                    if (result) onCeremonyUpdate({ phase: 'stag_result', stag_forfeit: result })
-                  }, 1500)
-                }}
-                  className="w-full py-3 bg-yellow-600 hover:bg-yellow-500 rounded font-bold text-sm">
-                  🎰 Spin the Wheel for Diccon
-                </button>
-              ) : (
-                <div className="text-center">
-                  <p className="text-xs text-gray-500 mb-1">Diccon must do:</p>
-                  <p className="text-lg font-bold text-yellow-400">{forfeitResult}</p>
-                  <button onClick={() => { setForfeitResult(null); setForfeitPhase('loser'); onCeremonyUpdate({ phase: 'stag_result' }) }}
-                    className="mt-3 w-full py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm">
-                    Next → Losing Team
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+function AdminCeremonyControls({ forfeitPhase, loserName, nextPenalty, nextRoundNumber, onAdvanceToLoser, onAssignPenalty, onDone, onDismiss }: {
+  forfeitPhase: string
+  loserName: string
+  nextPenalty: string | undefined
+  nextRoundNumber: number
+  onAdvanceToLoser: () => void
+  onAssignPenalty: () => void
+  onDone: () => void
+  onDismiss: () => void
+  ceremonyUpdate: Props['onCeremonyUpdate']
+}) {
+  return (
+    <div className="bg-gray-800 rounded-lg p-4 mt-3 space-y-3">
+      <h4 className="font-bold text-sm text-yellow-400">🎡 Forfeit Ceremony</h4>
 
-          {/* Step 2: Losing team choice */}
-          {forfeitPhase === 'loser' && (
-            <div>
-              <p className="text-xs text-gray-400 mb-2">
-                Step 2: {teams.find(t => t.id !== lastWinnerId)?.name} — forfeit or penalty?
-              </p>
+      {forfeitPhase === 'stag' && (
+        <div>
+          <p className="text-xs text-gray-400">Step 1: Waiting for someone to spin on the big screen...</p>
+          <p className="text-xs text-gray-500 mt-1">The "SPIN!" button is showing on the public screen.</p>
+          <button onClick={onAdvanceToLoser}
+            className="mt-3 w-full py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm">
+            Skip → Losing Team
+          </button>
+        </div>
+      )}
 
-              {!loserChoice && (
-                <div className="flex gap-2">
-                  <button onClick={() => setLoserChoice('forfeit')}
-                    className="flex-1 py-3 bg-red-700 hover:bg-red-600 rounded font-medium text-sm">
-                    🎰 Spin a Forfeit
-                  </button>
-                  <button onClick={() => {
-                    setLoserChoice('penalty')
-                    onCeremonyUpdate({ phase: 'loser_penalty', loser_penalty: nextPenalty ?? 'No penalty' })
-                  }}
-                    className="flex-1 py-3 bg-orange-700 hover:bg-orange-600 rounded font-medium text-sm">
-                    ⚠️ Take Penalty
-                  </button>
-                </div>
-              )}
+      {forfeitPhase === 'loser' && (
+        <div>
+          <p className="text-xs text-gray-400 mb-2">Step 2: {loserName} — forfeit or penalty?</p>
+          <p className="text-xs text-gray-500 mb-3">The "SPIN A FORFEIT!" button is on the public screen. Or assign the penalty:</p>
+          <div className="flex gap-2">
+            <button onClick={onAssignPenalty}
+              className="flex-1 py-3 bg-orange-700 hover:bg-orange-600 rounded font-medium text-sm">
+              ⚠️ Assign Penalty: {nextPenalty ?? `R${nextRoundNumber}`}
+            </button>
+            <button onClick={onDone}
+              className="flex-1 py-3 bg-gray-700 hover:bg-gray-600 rounded font-medium text-sm">
+              Skip → Done
+            </button>
+          </div>
+        </div>
+      )}
 
-              {loserChoice === 'forfeit' && !forfeitResult && (
-                <button onClick={() => {
-                  onCeremonyUpdate({ phase: 'loser_spinning' })
-                  setTimeout(() => {
-                    const result = spinForfeit()
-                    if (result) onCeremonyUpdate({ phase: 'loser_forfeit', loser_forfeit: result })
-                  }, 1500)
-                }}
-                  className="w-full py-3 bg-red-600 hover:bg-red-500 rounded font-bold text-sm">
-                  🎰 Spin the Wheel
-                </button>
-              )}
-
-              {loserChoice === 'forfeit' && forfeitResult && (
-                <div className="text-center">
-                  <p className="text-xs text-gray-500 mb-1">{teams.find(t => t.id !== lastWinnerId)?.name} must do:</p>
-                  <p className="text-lg font-bold text-red-400">{forfeitResult}</p>
-                  <button onClick={() => {
-                    setForfeitPhase('done')
-                    onCeremonyUpdate({ phase: 'done' })
-                  }}
-                    className="mt-3 w-full py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm">
-                    Done ✓
-                  </button>
-                </div>
-              )}
-
-              {loserChoice === 'penalty' && (
-                <div className="text-center">
-                  <p className="text-xs text-gray-500 mb-1">
-                    {teams.find(t => t.id !== lastWinnerId)?.name} takes the penalty into R{nextRoundNumber}:
-                  </p>
-                  <p className="text-lg font-bold text-orange-400">⚠️ {nextPenalty ?? 'No penalty defined'}</p>
-                  <button onClick={() => {
-                    setForfeitPhase('done')
-                    onCeremonyUpdate({ phase: 'done' })
-                  }}
-                    className="mt-3 w-full py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm">
-                    Done ✓
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Step 3: Done */}
-          {forfeitPhase === 'done' && (
-            <div className="text-center">
-              <p className="text-xs text-green-400 mb-2">✅ Forfeit ceremony complete — end the round when ready.</p>
-              <button onClick={() => onCeremonyUpdate({ phase: 'idle' })}
-                className="w-full py-2 bg-gray-700 hover:bg-gray-600 rounded text-xs text-gray-400">
-                Dismiss from public screen
-              </button>
-            </div>
-          )}
+      {forfeitPhase === 'done' && (
+        <div className="text-center">
+          <p className="text-xs text-green-400 mb-2">✅ Forfeit ceremony complete — end the round when ready.</p>
+          <button onClick={onDismiss}
+            className="w-full py-2 bg-gray-700 hover:bg-gray-600 rounded text-xs text-gray-400">
+            Dismiss from public screen
+          </button>
         </div>
       )}
     </div>

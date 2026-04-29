@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 
-export type CeremonyPhase = 'idle' | 'stag_spinning' | 'stag_result' | 'loser_spinning' | 'loser_forfeit' | 'loser_penalty' | 'done'
+export type CeremonyPhase = 'idle' | 'stag_spin' | 'stag_spinning' | 'stag_result' | 'loser_choice' | 'loser_spinning' | 'loser_forfeit' | 'loser_penalty' | 'done'
 
 export interface CeremonyState {
   id: string
