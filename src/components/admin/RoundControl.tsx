@@ -29,13 +29,21 @@ export function RoundControl({ rounds, onRefetch, onRefetchAll, onResetCeremony 
   const restartAll = async () => {
     if (!confirm('Restart ALL rounds? This wipes every score and resets everything.')) return
     if (!confirm('Are you sure? This cannot be undone.')) return
-    await supabase.from('individual_scores').delete().gte('created_at', '1970-01-01')
-    await supabase.from('team_scores').delete().gte('created_at', '1970-01-01')
-    await supabase.from('quiz_responses').delete().gte('created_at', '1970-01-01')
-    await supabase.from('rounds').update({ status: 'upcoming' }).gte('created_at', '1970-01-01')
-    await supabase.from('players').update({ team_id: null }).gte('created_at', '1970-01-01')
-    // Reset forfeits to seed data
-    await supabase.from('forfeits').delete().gte('created_at', '1970-01-01')
+
+    const steps = [
+      supabase.from('individual_scores').delete().gte('created_at', '1970-01-01'),
+      supabase.from('team_scores').delete().gte('created_at', '1970-01-01'),
+      supabase.from('quiz_responses').delete().gte('created_at', '1970-01-01'),
+      supabase.from('rounds').update({ status: 'upcoming' }).gte('created_at', '1970-01-01'),
+      supabase.from('players').update({ team_id: null }).gte('created_at', '1970-01-01'),
+      supabase.from('forfeits').delete().gte('created_at', '1970-01-01'),
+    ]
+    const results = await Promise.all(steps)
+    const errors = results.filter(r => r.error).map(r => r.error!.message)
+    if (errors.length > 0) {
+      alert(`Reset errors: ${errors.join(', ')}`)
+    }
+
     await supabase.from('forfeits').insert(FORFEITS.map(text => ({ text })))
     onResetCeremony?.()
     onRefetchAll()
