@@ -25,6 +25,12 @@ export function RoundScorer({ round, teams, players, ceremonyState, onCeremonyUp
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [lastWinnerId, setLastWinnerId] = useState<string | null>(null)
+  const [scored, setScored] = useState(false)
+
+  // For sub-match rounds, check if all matches have been scored
+  const allMatchesScored = round.has_sub_matches
+    ? matchNumber > (round.sub_match_count ?? 3)
+    : scored
 
   // Derive forfeit phase from DB ceremony state (survives page reloads)
   const ceremonyPhase = ceremonyState?.phase ?? 'idle'
@@ -95,9 +101,7 @@ export function RoundScorer({ round, teams, players, ceremonyState, onCeremonyUp
     const winnerName = teams.find(t => t.id === winningTeamId)!.name
     setMessage(`✅ ${winnerName} wins${round.has_sub_matches ? ` match ${matchNumber}` : ''}! (+${round.points_per_win} pts)`)
     setLastWinnerId(winningTeamId)
-
-    // Don't auto-start ceremony — admin triggers it manually
-
+    if (!round.has_sub_matches) setScored(true)
     if (round.has_sub_matches) setMatchNumber(prev => prev + 1)
     setSaving(false)
   }
@@ -191,8 +195,8 @@ export function RoundScorer({ round, teams, players, ceremonyState, onCeremonyUp
         </div>
       )}
 
-      {/* Score buttons */}
-      {forfeitPhase === 'none' && (
+      {/* Score buttons — hidden once all matches scored or during ceremony */}
+      {forfeitPhase === 'none' && !allMatchesScored && (
         <>
           <p className="text-xs text-gray-400 mb-2">Who won?</p>
           <div className="flex gap-2">
@@ -204,6 +208,9 @@ export function RoundScorer({ round, teams, players, ceremonyState, onCeremonyUp
             ))}
           </div>
         </>
+      )}
+      {allMatchesScored && forfeitPhase === 'none' && !lastWinnerId && (
+        <p className="text-xs text-green-400 text-center">All matches scored for this round.</p>
       )}
 
       {message && <p className="text-xs mt-2 text-center">{message}</p>}
