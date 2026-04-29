@@ -9,7 +9,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "seed": "npx tsx scripts/seed.ts",
-    "simulate": "npx tsx scripts/simulate-event.ts"
+    "simulate": "npx tsx scripts/simulate-event.ts",
+    "test": "vitest --run",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.103.3",
@@ -19,6 +21,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
+    "@playwright/test": "^1.59.1",
     "@tailwindcss/vite": "^4.2.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",

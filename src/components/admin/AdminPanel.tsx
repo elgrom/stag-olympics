@@ -72,7 +72,10 @@ export function AdminPanel() {
       )}
 
       {currentRound && currentRound.number !== 1 && (
-        <RoundScorer round={currentRound} teams={teams} players={players} />
+        <RoundScorer round={currentRound} teams={teams} players={players}
+          forfeits={forfeits} onMarkForfeitUsed={(id) => {
+            supabase.from('forfeits').update({ is_used: true }).eq('id', id)
+          }} />
       )}
 
       {teams.length === 2 && (
