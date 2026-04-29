@@ -23,6 +23,7 @@ export function createStatefulMock() {
     { id: 'p6', first_name: 'Seb', last_name: 'Mayfield', nickname: null, team_id: 'team-a', created_at: '2026-01-01T00:00:00Z' },
     { id: 'p7', first_name: 'Pedro', last_name: 'Leon', nickname: null, team_id: 'team-a', created_at: '2026-01-01T00:00:00Z' },
     { id: 'p8', first_name: 'Marc', last_name: 'Sparrow', nickname: null, team_id: 'team-a', created_at: '2026-01-01T00:00:00Z' },
+    { id: 'p17', first_name: 'Diccon', last_name: 'Mayfield', nickname: null, team_id: 'team-a', created_at: '2026-01-01T00:00:00Z' },
     { id: 'p9', first_name: 'Dom', last_name: 'Obrien', nickname: null, team_id: 'team-b', created_at: '2026-01-01T00:00:00Z' },
     { id: 'p10', first_name: 'Iggy', last_name: 'Harris', nickname: null, team_id: 'team-b', created_at: '2026-01-01T00:00:00Z' },
     { id: 'p11', first_name: 'Bryan', last_name: 'Bennet', nickname: null, team_id: 'team-b', created_at: '2026-01-01T00:00:00Z' },
@@ -31,6 +32,7 @@ export function createStatefulMock() {
     { id: 'p14', first_name: 'Jonathan', last_name: 'Midgely', nickname: null, team_id: 'team-b', created_at: '2026-01-01T00:00:00Z' },
     { id: 'p15', first_name: 'Simon', last_name: 'None', nickname: null, team_id: 'team-b', created_at: '2026-01-01T00:00:00Z' },
     { id: 'p16', first_name: 'Dom', last_name: 'Andre', nickname: null, team_id: 'team-b', created_at: '2026-01-01T00:00:00Z' },
+    { id: 'p18', first_name: 'Liam', last_name: 'Jones', nickname: null, team_id: 'team-b', created_at: '2026-01-01T00:00:00Z' },
   ]
 
   const rounds = [

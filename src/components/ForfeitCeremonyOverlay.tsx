@@ -16,16 +16,21 @@ export function ForfeitCeremonyOverlay({ state, forfeits, onMarkUsed, onUpdateCe
   if (!state || state.phase === 'idle') return null
 
   const spinAndReveal = (target: 'stag' | 'loser') => {
+    const available = forfeits.filter(f => !f.is_used)
+    if (available.length === 0) {
+      // No forfeits left — show a message instead of getting stuck
+      if (target === 'stag') {
+        onUpdateCeremony({ phase: 'stag_result', stag_forfeit: 'No forfeits left! Make one up!' })
+      } else {
+        onUpdateCeremony({ phase: 'loser_forfeit', loser_forfeit: 'No forfeits left! Make one up!' })
+      }
+      return
+    }
+
     setSpinning(true)
-    // Show spinning phase immediately
     onUpdateCeremony({ phase: target === 'stag' ? 'stag_spinning' : 'loser_spinning' })
 
     setTimeout(() => {
-      const available = forfeits.filter(f => !f.is_used)
-      if (available.length === 0) {
-        setSpinning(false)
-        return
-      }
       const chosen = available[Math.floor(Math.random() * available.length)]
       onMarkUsed(chosen.id)
 

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 import { ROUND_INFO } from '../../lib/round-info'
 import { displayName } from '../../lib/types'
@@ -23,6 +23,7 @@ const PLAYERS_PER_SIDE: Record<number, number> = {
 export function RoundScorer({ round, teams, players, ceremonyState, onCeremonyUpdate }: Props) {
   const [matchNumber, setMatchNumber] = useState(1)
   const [saving, setSaving] = useState(false)
+  const savingRef = useRef(false) // Prevents double-click race condition
   const [message, setMessage] = useState('')
   const [lastWinnerId, setLastWinnerId] = useState<string | null>(null)
   const [scored, setScored] = useState(false)
@@ -66,20 +67,43 @@ export function RoundScorer({ round, teams, players, ceremonyState, onCeremonyUp
   }
 
   const scoreMatch = async (winningTeamId: string) => {
+    // Guard against double-click (ref check is synchronous, no race condition)
+    if (savingRef.current) return
+    savingRef.current = true
     setSaving(true)
     setMessage('')
-    const losingTeamId = teams.find(t => t.id !== winningTeamId)!.id
+
+    const losingTeam = teams.find(t => t.id !== winningTeamId)
+    if (!losingTeam) {
+      setMessage('Error: Need two teams to score')
+      setSaving(false)
+      savingRef.current = false
+      return
+    }
+
+    // Validate lineup for individual scoring rounds
+    if (round.has_individual_scoring) {
+      const winnerLineup = getLineup(matchNumber, winningTeamId)
+      if (winnerLineup.length < playersPerSide) {
+        setMessage(`⚠️ Pick ${playersPerSide} players per team before scoring`)
+        setSaving(false)
+        savingRef.current = false
+        return
+      }
+    }
+
     const matchNum = round.has_sub_matches ? matchNumber : null
 
     // Insert team scores
     const { error } = await supabase.from('team_scores').insert([
       { round_id: round.id, team_id: winningTeamId, match_number: matchNum, points: round.points_per_win },
-      { round_id: round.id, team_id: losingTeamId, match_number: matchNum, points: round.points_per_loss },
+      { round_id: round.id, team_id: losingTeam.id, match_number: matchNum, points: round.points_per_loss },
     ])
 
     if (error) {
       setMessage(`Error: ${error.message}`)
       setSaving(false)
+      savingRef.current = false
       return
     }
 
@@ -104,6 +128,7 @@ export function RoundScorer({ round, teams, players, ceremonyState, onCeremonyUp
     if (!round.has_sub_matches) setScored(true)
     if (round.has_sub_matches) setMatchNumber(prev => prev + 1)
     setSaving(false)
+    savingRef.current = false
   }
 
   const nextRoundNumber = round.number + 1

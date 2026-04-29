@@ -15,6 +15,7 @@ export function RoundControl({ rounds, onRefetch, onRefetchAll, onResetCeremony 
 
   const startRound = async (round: Round) => {
     if (currentLive) {
+      if (!confirm(`R${currentLive.number} ${currentLive.name} is still live. Complete it and start R${round.number}?`)) return
       await supabase.from('rounds').update({ status: 'completed' }).eq('id', currentLive.id)
     }
     await supabase.from('rounds').update({ status: 'live' }).eq('id', round.id)

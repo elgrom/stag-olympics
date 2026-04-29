@@ -127,7 +127,12 @@ test.describe('Full Event Playthrough', () => {
     // Pick remaining players
     await page.locator('button').filter({ hasText: 'Pedro' }).first().click()
     await page.locator('button').filter({ hasText: 'Marc' }).first().click()
+    await page.locator('button').filter({ hasText: 'Diccon' }).first().click()
     await page.locator('button').filter({ hasText: 'Simon' }).first().click()
+    // Pick 2 more available bucks players (Dom Andre shows as "Dom", Ric)
+    const availableBucks = page.locator('button:not([disabled])').filter({ hasText: /^Dom$/ })
+    await availableBucks.first().click()
+    await page.locator('button').filter({ hasText: 'Liam' }).first().click()
 
     // Score match 3: Stags win (2-1 series)
     const scorer3 = page.locator('div').filter({ hasText: 'Who won?' }).last()
