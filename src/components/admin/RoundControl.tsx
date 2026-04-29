@@ -4,9 +4,10 @@ import type { Round } from '../../lib/types'
 
 interface Props {
   rounds: Round[]
+  onRefetch: () => void
 }
 
-export function RoundControl({ rounds }: Props) {
+export function RoundControl({ rounds, onRefetch }: Props) {
   const currentLive = rounds.find(r => r.status === 'live')
   const nextUpcoming = rounds.filter(r => r.status === 'upcoming').sort((a, b) => a.number - b.number)[0]
 
@@ -15,10 +16,12 @@ export function RoundControl({ rounds }: Props) {
       await supabase.from('rounds').update({ status: 'completed' }).eq('id', currentLive.id)
     }
     await supabase.from('rounds').update({ status: 'live' }).eq('id', round.id)
+    onRefetch()
   }
 
   const endRound = async (round: Round) => {
     await supabase.from('rounds').update({ status: 'completed' }).eq('id', round.id)
+    onRefetch()
   }
 
   const restartAll = async () => {
@@ -32,6 +35,7 @@ export function RoundControl({ rounds }: Props) {
     // Reset forfeits to seed data
     await supabase.from('forfeits').delete().gte('created_at', '1970-01-01')
     await supabase.from('forfeits').insert(FORFEITS.map(text => ({ text })))
+    onRefetch()
   }
 
   const restartRound = async (round: Round) => {
@@ -45,6 +49,7 @@ export function RoundControl({ rounds }: Props) {
     await supabase.from('team_scores').delete().eq('round_id', round.id)
     // Set it live
     await supabase.from('rounds').update({ status: 'live' }).eq('id', round.id)
+    onRefetch()
   }
 
   const completed = rounds.filter(r => r.status === 'completed').sort((a, b) => a.number - b.number)

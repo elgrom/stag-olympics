@@ -10,7 +10,7 @@ import { supabase } from '../../lib/supabase'
 
 export function AdminPanel() {
   useEffect(() => { document.title = '⚙️ SO - Admin' }, [])
-  const { teams, players, rounds, totals, currentRound } = useEventData()
+  const { teams, players, rounds, totals, currentRound, refetchRounds } = useEventData()
   const { forfeits, addForfeit, clearAll: clearForfeits } = useForfeits()
   const { broadcast: broadcastForfeit } = useForfeitCeremony()
   const [forfeitText, setForfeitText] = useState('')
@@ -53,7 +53,7 @@ export function AdminPanel() {
         </div>
       )}
 
-      <RoundControl rounds={rounds} />
+      <RoundControl rounds={rounds} onRefetch={refetchRounds} />
 
       {currentRound?.number === 1 && (
         <QuizAdmin

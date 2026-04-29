@@ -6,7 +6,7 @@ import type { Team, Player, Round, TeamScore, IndividualScore } from '../lib/typ
 export function useEventData() {
   const { rows: teams } = useRealtimeTable<Team>('teams')
   const { rows: players } = useRealtimeTable<Player>('players')
-  const { rows: rounds } = useRealtimeTable<Round>('rounds', { column: 'number', ascending: true })
+  const { rows: rounds, refetch: refetchRounds } = useRealtimeTable<Round>('rounds', { column: 'number', ascending: true })
   const { rows: teamScores } = useRealtimeTable<TeamScore>('team_scores')
   const { rows: individualScores, refetch: refetchIndividualScores } = useRealtimeTable<IndividualScore>('individual_scores')
 
@@ -21,5 +21,5 @@ export function useEventData() {
   const individualRankings = useMemo(() => calcIndividualTotals(players, individualScores), [players, individualScores])
   const currentRound = useMemo(() => rounds.find(r => r.status === 'live') ?? null, [rounds])
 
-  return { teams, players, rounds, teamScores, individualScores, totals, roundScores, individualRankings, currentRound, refetchIndividualScores }
+  return { teams, players, rounds, teamScores, individualScores, totals, roundScores, individualRankings, currentRound, refetchRounds, refetchIndividualScores }
 }
