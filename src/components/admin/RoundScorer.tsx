@@ -221,7 +221,7 @@ export function RoundScorer({ round, teams, players, forfeits, onMarkForfeitUsed
           setForfeitPhase('stag')
           const winnerName = teams.find(t => t.id === lastWinnerId)!.name
           const loserName = teams.find(t => t.id !== lastWinnerId)!.name
-          onCeremonyUpdate({ phase: 'stag_spinning', winner_name: winnerName, loser_name: loserName, stag_forfeit: null, loser_forfeit: null, loser_penalty: null })
+          onCeremonyUpdate({ phase: 'stag_spinning', winner_name: winnerName, loser_name: loserName })
         }}
           className="w-full py-2 mt-3 bg-yellow-700 hover:bg-yellow-600 rounded text-sm font-medium">
           🎡 Start Forfeit Ceremony
