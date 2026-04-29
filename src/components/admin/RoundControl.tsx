@@ -30,21 +30,43 @@ export function RoundControl({ rounds, onRefetch, onRefetchAll, onResetCeremony 
     if (!confirm('Restart ALL rounds? This wipes every score and resets everything.')) return
     if (!confirm('Are you sure? This cannot be undone.')) return
 
-    const steps = [
-      supabase.from('individual_scores').delete().gte('created_at', '1970-01-01'),
-      supabase.from('team_scores').delete().gte('created_at', '1970-01-01'),
-      supabase.from('quiz_responses').delete().gte('created_at', '1970-01-01'),
-      supabase.from('rounds').update({ status: 'upcoming' }).gte('created_at', '1970-01-01'),
-      supabase.from('players').update({ team_id: null }).gte('created_at', '1970-01-01'),
-      supabase.from('forfeits').delete().gte('created_at', '1970-01-01'),
-    ]
-    const results = await Promise.all(steps)
-    const errors = results.filter(r => r.error).map(r => r.error!.message)
+    const errors: string[] = []
+
+    // Delete scores first (foreign key safe order)
+    const r1 = await supabase.from('individual_scores').delete().gte('created_at', '1970-01-01')
+    if (r1.error) errors.push(`individual_scores: ${r1.error.message}`)
+
+    const r2 = await supabase.from('team_scores').delete().gte('created_at', '1970-01-01')
+    if (r2.error) errors.push(`team_scores: ${r2.error.message}`)
+
+    const r3 = await supabase.from('quiz_responses').delete().gte('created_at', '1970-01-01')
+    if (r3.error) errors.push(`quiz_responses: ${r3.error.message}`)
+
+    const r4 = await supabase.from('rounds').update({ status: 'upcoming' }).gte('created_at', '1970-01-01')
+    if (r4.error) errors.push(`rounds: ${r4.error.message}`)
+
+    const r5 = await supabase.from('players').update({ team_id: null }).gte('created_at', '1970-01-01')
+    if (r5.error) errors.push(`players: ${r5.error.message}`)
+
+    const r6 = await supabase.from('forfeits').delete().gte('created_at', '1970-01-01')
+    if (r6.error) errors.push(`forfeits delete: ${r6.error.message}`)
+
+    const r7 = await supabase.from('forfeits').insert(FORFEITS.map(text => ({ text })))
+    if (r7.error) errors.push(`forfeits insert: ${r7.error.message}`)
+
+    // Reset ceremony overlay
+    const r8 = await supabase.from('ceremony_state').update({
+      phase: 'idle', winner_name: null, loser_name: null,
+      stag_forfeit: null, loser_forfeit: null, loser_penalty: null,
+    }).gte('updated_at', '1970-01-01')
+    if (r8.error) errors.push(`ceremony: ${r8.error.message}`)
+
     if (errors.length > 0) {
-      alert(`Reset errors: ${errors.join(', ')}`)
+      alert(`Reset errors:\n${errors.join('\n')}`)
+    } else {
+      alert('✅ Event reset complete')
     }
 
-    await supabase.from('forfeits').insert(FORFEITS.map(text => ({ text })))
     onResetCeremony?.()
     onRefetchAll()
   }
