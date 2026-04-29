@@ -19,5 +19,5 @@ export function useForfeits() {
     refetch()
   }, [refetch])
 
-  return { forfeits, addForfeit, markUsed, clearAll }
+  return { forfeits, addForfeit, markUsed, clearAll, refetch }
 }

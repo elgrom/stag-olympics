@@ -5,10 +5,11 @@ import type { Round } from '../../lib/types'
 interface Props {
   rounds: Round[]
   onRefetch: () => void
+  onRefetchAll: () => void
   onResetCeremony?: () => void
 }
 
-export function RoundControl({ rounds, onRefetch, onResetCeremony }: Props) {
+export function RoundControl({ rounds, onRefetch, onRefetchAll, onResetCeremony }: Props) {
   const currentLive = rounds.find(r => r.status === 'live')
   const nextUpcoming = rounds.filter(r => r.status === 'upcoming').sort((a, b) => a.number - b.number)[0]
 
@@ -37,7 +38,7 @@ export function RoundControl({ rounds, onRefetch, onResetCeremony }: Props) {
     await supabase.from('forfeits').delete().gte('created_at', '1970-01-01')
     await supabase.from('forfeits').insert(FORFEITS.map(text => ({ text })))
     onResetCeremony?.()
-    onRefetch()
+    onRefetchAll()
   }
 
   const restartRound = async (round: Round) => {
