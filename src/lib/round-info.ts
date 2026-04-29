@@ -5,6 +5,8 @@ export interface RoundInfo {
   kit: string
   drinking: string
   rules?: string[]
+  /** Penalty the losing team carries into this round if they skipped their forfeit */
+  penalty?: string
 }
 
 export const ROUND_INFO: Record<number, RoundInfo> = {
@@ -19,6 +21,7 @@ export const ROUND_INFO: Record<number, RoundInfo> = {
     scoring: '3 pts to winning team per match, 1 pt to loser. 9 pts available. Winning players get individual points.',
     kit: 'Petanque set (check if castle has one)',
     drinking: 'Losers of each match take a penalty drink',
+    penalty: 'Oven mitts',
     rules: [
       'Flip a coin — winner picks who throws the cochonnet (jack) first.',
       'The cochonnet must land 6-10 metres away. If it\'s too short or out of bounds, the other team throws it.',
@@ -36,18 +39,21 @@ export const ROUND_INFO: Record<number, RoundInfo> = {
     scoring: '3 pts to winner, 1 pt to loser.',
     kit: 'Water balloons (bag of 100)',
     drinking: 'None needed — the punishment is getting wet',
+    penalty: 'Oven mitts',
   },
   4: {
     format: 'Best of 3 rounds, rotating doubles pairs from each team.',
     scoring: '3 pts to winning team per round, 1 pt to loser. 9 pts available. Winning players get individual points.',
     kit: 'Ping pong balls, plastic cups, table, beer',
     drinking: "It's beer pong — drinking IS the game",
+    penalty: 'Left handed',
   },
   5: {
     format: 'Best of 3 doubles matches. Each team picks a pair for each match — rotate players. First to 11 points per match (no deuces).',
     scoring: '3 pts to winning team per match, 1 pt to loser. 9 pts available. Winning players get individual points.',
     kit: 'Rackets and balls (castle should have them — check in advance)',
     drinking: 'Losers of each match take a penalty drink. Spectators heckle from the sideline with beers.',
+    penalty: 'Banana costume',
     rules: [
       'Doubles: both players on a team take turns hitting. Alternate who serves each game.',
       'Rally scoring to 11 — every rally wins a point regardless of who served.',
@@ -65,17 +71,20 @@ export const ROUND_INFO: Record<number, RoundInfo> = {
     scoring: '5 pts to winner, 2 pts to loser. Diccon picks the winner.',
     kit: "Whatever's around — that's the point",
     drinking: 'Diccon assigns a penalty to his least favourite entry',
+    penalty: 'Banana costume',
   },
   7: {
     format: 'Forehead on the bat (or broom handle), 10 spins, sprint to the cone and back. Full team relay.',
     scoring: '3 pts to winner, 1 pt to loser.',
     kit: 'Broom handle or bat, cones (or shoes)',
     drinking: 'Each runner finishes half a beer before spinning',
+    penalty: 'Horse head',
   },
   8: {
     format: 'Full team relay. Line up either side of a table, drink, flip, next person goes. Best of 3.',
     scoring: '5 pts to winner, 2 pts to loser.',
     kit: 'Plastic cups, beer, table',
     drinking: "It's flip cup — you're already drinking",
+    penalty: 'Horse head',
   },
 }

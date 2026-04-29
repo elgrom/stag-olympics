@@ -83,6 +83,12 @@ export function RoundCard({ round, teams, scores }: Props) {
                   </ol>
                 </div>
               )}
+              {info.penalty && (
+                <div>
+                  <span className="text-gray-500 uppercase tracking-wide text-[10px]">Loser penalty</span>
+                  <p className="text-orange-400 mt-0.5">⚠️ {info.penalty}</p>
+                </div>
+              )}
             </div>
           )}
         </>

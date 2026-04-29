@@ -252,6 +252,17 @@ function RoundInfoPanel({ info }: { info: import('../../lib/round-info').RoundIn
             <span className="text-gray-500 uppercase tracking-wide text-[10px]">Drinking rule</span>
             <p className="text-yellow-400 mt-0.5">🍺 {info.drinking}</p>
           </div>
+          {info.penalty && (
+            <div>
+              <span className="text-gray-500 uppercase tracking-wide text-[10px]">Penalty (if loser skips forfeit)</span>
+              <p className="text-orange-400 mt-0.5">⚠️ {info.penalty}</p>
+            </div>
+          )}
+          <div className="border-t border-gray-700 pt-2 mt-2">
+            <span className="text-gray-500 uppercase tracking-wide text-[10px]">End of round</span>
+            <p className="text-gray-300 mt-0.5">1. Winner spins the wheel → Diccon does the forfeit</p>
+            <p className="text-gray-300">2. Losing team picks someone for a forfeit OR takes the penalty into the next round</p>
+          </div>
         </div>
       )}
     </div>
