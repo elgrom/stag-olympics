@@ -7,9 +7,10 @@ interface Props {
   forfeits: Forfeit[]
   onMarkUsed: (id: string) => void
   onUpdateCeremony: (fields: { phase?: CeremonyPhase; stag_forfeit?: string; loser_forfeit?: string; loser_penalty?: string }) => void
+  nextPenalty?: string
 }
 
-export function ForfeitCeremonyOverlay({ state, forfeits, onMarkUsed, onUpdateCeremony }: Props) {
+export function ForfeitCeremonyOverlay({ state, forfeits, onMarkUsed, onUpdateCeremony, nextPenalty }: Props) {
   const [spinning, setSpinning] = useState(false)
 
   if (!state || state.phase === 'idle') return null
@@ -85,7 +86,13 @@ export function ForfeitCeremonyOverlay({ state, forfeits, onMarkUsed, onUpdateCe
               className="w-full py-6 bg-red-600 hover:bg-red-500 active:scale-95 rounded-xl font-bold text-2xl transition-all mb-3 disabled:opacity-50">
               🎰 SPIN A FORFEIT!
             </button>
-            <p className="text-xs text-gray-600">Or the admin can assign the penalty</p>
+            {nextPenalty && (
+              <div className="mt-4 bg-gray-800 rounded-lg p-3">
+                <p className="text-xs text-gray-500 mb-1">Or take the penalty into next round:</p>
+                <p className="text-lg font-bold text-orange-400">⚠️ {nextPenalty}</p>
+                <p className="text-xs text-gray-600 mt-1">Admin assigns this from their screen</p>
+              </div>
+            )}
           </div>
         )}
 

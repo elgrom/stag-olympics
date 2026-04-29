@@ -7,6 +7,7 @@ function usePageTitle(title: string) {
 import { useEventData } from './hooks/useEventData'
 import { useForfeits } from './hooks/useForfeits'
 import { useForfeitCeremony } from './hooks/useForfeitCeremony'
+import { ROUND_INFO } from './lib/round-info'
 import { ScoreHeader } from './components/ScoreHeader'
 import { RoundTimeline } from './components/RoundTimeline'
 import { IndividualBoard } from './components/IndividualBoard'
@@ -28,7 +29,8 @@ function MainApp() {
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       <ForfeitCeremonyOverlay state={ceremonyState} forfeits={forfeits}
-        onMarkUsed={markUsed} onUpdateCeremony={updateCeremony} />
+        onMarkUsed={markUsed} onUpdateCeremony={updateCeremony}
+        nextPenalty={currentRound ? ROUND_INFO[currentRound.number + 1]?.penalty : undefined} />
       {activeTab === 'scores' && (
         <>
           <ScoreHeader teams={teams} totals={totals} currentRound={currentRound} />
