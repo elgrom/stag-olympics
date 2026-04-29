@@ -31,7 +31,7 @@ export function RoundScorer({ round, teams, players, ceremonyState, onCeremonyUp
   const ceremonyActive = ceremonyPhase !== 'idle'
   const forfeitPhase: 'none' | 'stag' | 'loser' | 'done' =
     ceremonyPhase === 'idle' ? 'none'
-    : ceremonyPhase === 'done' ? 'done'
+    : ['done', 'loser_forfeit', 'loser_penalty'].includes(ceremonyPhase) ? 'done'
     : ['stag_spin', 'stag_spinning', 'stag_result'].includes(ceremonyPhase) ? 'stag'
     : 'loser'
 

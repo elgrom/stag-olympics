@@ -168,10 +168,9 @@ test.describe('Two-Screen Forfeit Ceremony', () => {
 
     // ── ADMIN: Done & dismiss ──
     await adminPage.reload()
-    // Admin can click done to wrap up
-    // The forfeitPhase is still 'loser' from before, reload resets local state
-    // but ceremony_state DB has loser_forfeit set, so admin sees it reflected
-    await expect(adminPage.getByText('Forfeit Ceremony')).toBeVisible()
+    // Ceremony is in loser_forfeit phase which shows "done" controls
+    await expect(adminPage.getByText(/Forfeit ceremony complete/)).toBeVisible()
+    await adminPage.getByRole('button', { name: /Dismiss/ }).click()
 
     // Clean up
     await adminContext.close()
@@ -215,9 +214,8 @@ test.describe('Two-Screen Forfeit Ceremony', () => {
     // R4 penalty is "Left handed"
     await expect(publicPage.getByText(/Left handed/)).toBeVisible()
 
-    // Admin marks done then dismisses
+    // Admin dismisses (loser_penalty maps to done phase directly)
     await adminPage.reload()
-    await adminPage.getByRole('button', { name: /Skip.*Done/ }).click()
     await expect(adminPage.getByText(/Forfeit ceremony complete/)).toBeVisible()
     await adminPage.getByRole('button', { name: /Dismiss/ }).click()
 
