@@ -12,7 +12,7 @@ export function AdminPanel() {
   useEffect(() => { document.title = '⚙️ SO - Admin' }, [])
   const { teams, players, rounds, totals, currentRound, refetchRounds } = useEventData()
   const { forfeits, addForfeit, clearAll: clearForfeits } = useForfeits()
-  const { updateCeremony, resetCeremony } = useForfeitCeremony()
+  const { state: ceremonyState, updateCeremony, resetCeremony } = useForfeitCeremony()
   const [forfeitText, setForfeitText] = useState('')
 
   const handleAddForfeit = async () => {
@@ -75,7 +75,7 @@ export function AdminPanel() {
 
       {currentRound && currentRound.number !== 1 && (
         <RoundScorer round={currentRound} teams={teams} players={players}
-          onCeremonyUpdate={updateCeremony} />
+          ceremonyState={ceremonyState} onCeremonyUpdate={updateCeremony} />
       )}
 
       {teams.length === 2 && (

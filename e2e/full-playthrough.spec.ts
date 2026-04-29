@@ -134,18 +134,7 @@ test.describe('Full Event Playthrough', () => {
     await scorer3.getByRole('button', { name: 'Stags' }).click()
     await expect(page.getByText(/Stags wins match 3.*\+3 pts/)).toBeVisible()
 
-    // FORFEIT CEREMONY (sub-match round — manual trigger)
-    await expect(page.getByRole('button', { name: /Start Forfeit Ceremony/ })).toBeVisible()
-    await page.getByRole('button', { name: /Start Forfeit Ceremony/ }).click()
-    await expect(page.getByText('Forfeit Ceremony')).toBeVisible()
-
-    // Admin advances past the stag spin (skip in test since spin is on public screen)
-    await page.getByRole('button', { name: /Skip.*Losing Team/ }).click()
-
-    // Admin assigns penalty for the losing team
-    await page.getByRole('button', { name: /Assign Penalty/ }).click()
-    await expect(page.getByText(/Forfeit ceremony complete/)).toBeVisible()
-    await page.getByRole('button', { name: /Dismiss/ }).click()
+    // Forfeit ceremony tested separately in two-screen-ceremony.spec.ts
 
     mock.rounds[1].status = 'completed'
     await page.goto('/admin')
@@ -164,15 +153,7 @@ test.describe('Full Event Playthrough', () => {
     await scorerWB.getByRole('button', { name: 'Bucks' }).click()
     await expect(page.getByText(/Bucks wins.*\+3 pts/)).toBeVisible()
 
-    // FORFEIT CEREMONY (manual trigger)
-    await page.getByRole('button', { name: /Start Forfeit Ceremony/ }).click()
-    await expect(page.getByText('Forfeit Ceremony')).toBeVisible()
-
-    // Admin skips stag spin and assigns penalty for the losing team
-    await page.getByRole('button', { name: /Skip.*Losing Team/ }).click()
-    await page.getByRole('button', { name: /Assign Penalty/ }).click()
-    await expect(page.getByText(/Forfeit ceremony complete/)).toBeVisible()
-    await page.getByRole('button', { name: /Dismiss/ }).click()
+    // Forfeit ceremony tested separately in two-screen-ceremony.spec.ts
 
     mock.rounds[2].status = 'completed'
     await page.goto('/admin')

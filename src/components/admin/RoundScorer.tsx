@@ -3,12 +3,13 @@ import { supabase } from '../../lib/supabase'
 import { ROUND_INFO } from '../../lib/round-info'
 import { displayName } from '../../lib/types'
 import type { Round, Team, Player } from '../../lib/types'
-import type { CeremonyPhase } from '../../hooks/useForfeitCeremony'
+import type { CeremonyPhase, CeremonyState } from '../../hooks/useForfeitCeremony'
 
 interface Props {
   round: Round
   teams: Team[]
   players: Player[]
+  ceremonyState: CeremonyState | null
   onCeremonyUpdate: (fields: { phase?: CeremonyPhase; winner_name?: string; loser_name?: string; stag_forfeit?: string; loser_forfeit?: string; loser_penalty?: string }) => void
 }
 
@@ -19,12 +20,20 @@ const PLAYERS_PER_SIDE: Record<number, number> = {
   5: 2, // Tennis 2v2
 }
 
-export function RoundScorer({ round, teams, players, onCeremonyUpdate }: Props) {
+export function RoundScorer({ round, teams, players, ceremonyState, onCeremonyUpdate }: Props) {
   const [matchNumber, setMatchNumber] = useState(1)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
-  const [forfeitPhase, setForfeitPhase] = useState<'none' | 'stag' | 'loser' | 'done'>('none')
   const [lastWinnerId, setLastWinnerId] = useState<string | null>(null)
+
+  // Derive forfeit phase from DB ceremony state (survives page reloads)
+  const ceremonyPhase = ceremonyState?.phase ?? 'idle'
+  const ceremonyActive = ceremonyPhase !== 'idle'
+  const forfeitPhase: 'none' | 'stag' | 'loser' | 'done' =
+    ceremonyPhase === 'idle' ? 'none'
+    : ceremonyPhase === 'done' ? 'done'
+    : ['stag_spin', 'stag_spinning', 'stag_result'].includes(ceremonyPhase) ? 'stag'
+    : 'loser'
 
   // Lineups: { [matchNumber]: { [teamId]: playerId[] } }
   const [lineups, setLineups] = useState<Record<number, Record<string, string[]>>>({})
@@ -200,9 +209,8 @@ export function RoundScorer({ round, teams, players, onCeremonyUpdate }: Props) 
       {message && <p className="text-xs mt-2 text-center">{message}</p>}
 
       {/* Manual trigger for forfeit ceremony after scoring */}
-      {forfeitPhase === 'none' && lastWinnerId && (
+      {!ceremonyActive && lastWinnerId && (
         <button onClick={() => {
-          setForfeitPhase('stag')
           const winnerName = teams.find(t => t.id === lastWinnerId)!.name
           const loserName = teams.find(t => t.id !== lastWinnerId)!.name
           onCeremonyUpdate({ phase: 'stag_spin', winner_name: winnerName, loser_name: loserName })
@@ -213,15 +221,15 @@ export function RoundScorer({ round, teams, players, onCeremonyUpdate }: Props) 
       )}
 
       {/* ── FORFEIT CEREMONY (admin controls) ── */}
-      {forfeitPhase !== 'none' && (
+      {ceremonyActive && (
         <AdminCeremonyControls
           forfeitPhase={forfeitPhase}
-          loserName={teams.find(t => t.id !== lastWinnerId)?.name ?? ''}
+          loserName={ceremonyState?.loser_name ?? teams.find(t => t.id !== lastWinnerId)?.name ?? ''}
           nextPenalty={nextPenalty}
           nextRoundNumber={nextRoundNumber}
-          onAdvanceToLoser={() => { setForfeitPhase('loser'); onCeremonyUpdate({ phase: 'loser_choice' }) }}
-          onAssignPenalty={() => { setForfeitPhase('done'); onCeremonyUpdate({ phase: 'loser_penalty', loser_penalty: nextPenalty ?? 'No penalty' }) }}
-          onDone={() => { setForfeitPhase('done'); onCeremonyUpdate({ phase: 'done' }) }}
+          onAdvanceToLoser={() => onCeremonyUpdate({ phase: 'loser_choice' })}
+          onAssignPenalty={() => onCeremonyUpdate({ phase: 'loser_penalty', loser_penalty: nextPenalty ?? 'No penalty' })}
+          onDone={() => onCeremonyUpdate({ phase: 'done' })}
           onDismiss={() => onCeremonyUpdate({ phase: 'idle' })}
           ceremonyUpdate={onCeremonyUpdate}
         />
