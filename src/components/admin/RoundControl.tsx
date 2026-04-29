@@ -61,18 +61,8 @@ export function RoundControl({ rounds, onRefetch, onRefetchAll, onResetCeremony 
     }).gte('updated_at', '1970-01-01')
     if (r8.error) errors.push(`ceremony: ${r8.error.message}`)
 
-    // Verify deletion actually worked
-    const verify = await Promise.all([
-      supabase.from('team_scores').select('id', { count: 'exact', head: true }),
-      supabase.from('individual_scores').select('id', { count: 'exact', head: true }),
-    ])
-    const teamScoreCount = verify[0].count ?? '?'
-    const indivScoreCount = verify[1].count ?? '?'
-
     if (errors.length > 0) {
-      alert(`Reset errors:\n${errors.join('\n')}\n\nRemaining: ${teamScoreCount} team scores, ${indivScoreCount} individual scores`)
-    } else {
-      alert(`✅ Event reset complete\n\nVerified: ${teamScoreCount} team scores, ${indivScoreCount} individual scores remaining`)
+      alert(`Reset errors:\n${errors.join('\n')}`)
     }
 
     onResetCeremony?.()
