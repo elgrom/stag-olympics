@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { ROUND_INFO } from '../../lib/round-info'
 import { displayName } from '../../lib/types'
 import type { Round, Team, Player, Forfeit } from '../../lib/types'
+import type { ForfeitEvent } from '../../hooks/useForfeitCeremony'
 
 interface Props {
   round: Round
@@ -10,6 +11,7 @@ interface Props {
   players: Player[]
   forfeits: Forfeit[]
   onMarkForfeitUsed: (id: string) => void
+  onBroadcastForfeit: (event: ForfeitEvent) => void
 }
 
 // How many players per side for each round with individual scoring
@@ -19,7 +21,7 @@ const PLAYERS_PER_SIDE: Record<number, number> = {
   5: 2, // Tennis 2v2
 }
 
-export function RoundScorer({ round, teams, players, forfeits, onMarkForfeitUsed }: Props) {
+export function RoundScorer({ round, teams, players, forfeits, onMarkForfeitUsed, onBroadcastForfeit }: Props) {
   const [matchNumber, setMatchNumber] = useState(1)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
@@ -92,21 +94,24 @@ export function RoundScorer({ round, teams, players, forfeits, onMarkForfeitUsed
     // For simple rounds, go straight to forfeit ceremony
     if (!round.has_sub_matches) {
       setForfeitPhase('stag')
+      const loserName = teams.find(t => t.id !== winningTeamId)!.name
+      onBroadcastForfeit({ type: 'start', winnerName, loserName })
     }
 
     if (round.has_sub_matches) setMatchNumber(prev => prev + 1)
     setSaving(false)
   }
 
-  const spinForfeit = useCallback(() => {
+  const spinForfeit = useCallback((): string | null => {
     const available = forfeits.filter(f => !f.is_used)
     if (available.length === 0) {
       setForfeitResult('No forfeits left!')
-      return
+      return null
     }
     const chosen = available[Math.floor(Math.random() * available.length)]
     setForfeitResult(chosen.text)
     onMarkForfeitUsed(chosen.id)
+    return chosen.text
   }, [forfeits, onMarkForfeitUsed])
 
   const nextRoundNumber = round.number + 1
@@ -217,7 +222,12 @@ export function RoundScorer({ round, teams, players, forfeits, onMarkForfeitUsed
 
       {/* For sub-match rounds: manual trigger for forfeit ceremony after all matches */}
       {round.has_sub_matches && forfeitPhase === 'none' && lastWinnerId && (
-        <button onClick={() => setForfeitPhase('stag')}
+        <button onClick={() => {
+          setForfeitPhase('stag')
+          const winnerName = teams.find(t => t.id === lastWinnerId)!.name
+          const loserName = teams.find(t => t.id !== lastWinnerId)!.name
+          onBroadcastForfeit({ type: 'start', winnerName, loserName })
+        }}
           className="w-full py-2 mt-3 bg-yellow-700 hover:bg-yellow-600 rounded text-sm font-medium">
           🎡 Start Forfeit Ceremony
         </button>
@@ -233,7 +243,14 @@ export function RoundScorer({ round, teams, players, forfeits, onMarkForfeitUsed
             <div>
               <p className="text-xs text-gray-400 mb-2">Step 1: Spin for Diccon (the stag)</p>
               {!forfeitResult ? (
-                <button onClick={spinForfeit}
+                <button onClick={() => {
+                  onBroadcastForfeit({ type: 'stag_spinning' })
+                  // Small delay so public screen shows spinning before result
+                  setTimeout(() => {
+                    const result = spinForfeit()
+                    if (result) onBroadcastForfeit({ type: 'stag_result', forfeit: result })
+                  }, 1500)
+                }}
                   className="w-full py-3 bg-yellow-600 hover:bg-yellow-500 rounded font-bold text-sm">
                   🎰 Spin the Wheel for Diccon
                 </button>
@@ -263,7 +280,11 @@ export function RoundScorer({ round, teams, players, forfeits, onMarkForfeitUsed
                     className="flex-1 py-3 bg-red-700 hover:bg-red-600 rounded font-medium text-sm">
                     🎰 Spin a Forfeit
                   </button>
-                  <button onClick={() => setLoserChoice('penalty')}
+                  <button onClick={() => {
+                    setLoserChoice('penalty')
+                    const loserName = teams.find(t => t.id !== lastWinnerId)!.name
+                    onBroadcastForfeit({ type: 'loser_penalty', teamName: loserName, penalty: nextPenalty ?? 'No penalty' })
+                  }}
                     className="flex-1 py-3 bg-orange-700 hover:bg-orange-600 rounded font-medium text-sm">
                     ⚠️ Take Penalty
                   </button>
@@ -271,7 +292,14 @@ export function RoundScorer({ round, teams, players, forfeits, onMarkForfeitUsed
               )}
 
               {loserChoice === 'forfeit' && !forfeitResult && (
-                <button onClick={spinForfeit}
+                <button onClick={() => {
+                  const loserName = teams.find(t => t.id !== lastWinnerId)!.name
+                  onBroadcastForfeit({ type: 'loser_spinning', teamName: loserName })
+                  setTimeout(() => {
+                    const result = spinForfeit()
+                    if (result) onBroadcastForfeit({ type: 'loser_forfeit', teamName: loserName, forfeit: result })
+                  }, 1500)
+                }}
                   className="w-full py-3 bg-red-600 hover:bg-red-500 rounded font-bold text-sm">
                   🎰 Spin the Wheel
                 </button>
@@ -281,7 +309,7 @@ export function RoundScorer({ round, teams, players, forfeits, onMarkForfeitUsed
                 <div className="text-center">
                   <p className="text-xs text-gray-500 mb-1">{teams.find(t => t.id !== lastWinnerId)?.name} must do:</p>
                   <p className="text-lg font-bold text-red-400">{forfeitResult}</p>
-                  <button onClick={() => setForfeitPhase('done')}
+                  <button onClick={() => { setForfeitPhase('done'); onBroadcastForfeit({ type: 'done' }) }}
                     className="mt-3 w-full py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm">
                     Done ✓
                   </button>
@@ -294,7 +322,7 @@ export function RoundScorer({ round, teams, players, forfeits, onMarkForfeitUsed
                     {teams.find(t => t.id !== lastWinnerId)?.name} takes the penalty into R{nextRoundNumber}:
                   </p>
                   <p className="text-lg font-bold text-orange-400">⚠️ {nextPenalty ?? 'No penalty defined'}</p>
-                  <button onClick={() => setForfeitPhase('done')}
+                  <button onClick={() => { setForfeitPhase('done'); onBroadcastForfeit({ type: 'done' }) }}
                     className="mt-3 w-full py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm">
                     Done ✓
                   </button>

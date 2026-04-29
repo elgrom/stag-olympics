@@ -6,11 +6,13 @@ function usePageTitle(title: string) {
 }
 import { useEventData } from './hooks/useEventData'
 import { useForfeits } from './hooks/useForfeits'
+import { useForfeitCeremony } from './hooks/useForfeitCeremony'
 import { ScoreHeader } from './components/ScoreHeader'
 import { RoundTimeline } from './components/RoundTimeline'
 import { IndividualBoard } from './components/IndividualBoard'
 import { TeamRosters } from './components/TeamRosters'
 import { ForfeitWheel } from './components/ForfeitWheel'
+import { ForfeitCeremonyOverlay } from './components/ForfeitCeremonyOverlay'
 import { BottomNav } from './components/BottomNav'
 import { AdminPanel } from './components/admin/AdminPanel'
 import { QuizPlayer } from './components/QuizPlayer'
@@ -21,9 +23,11 @@ function MainApp() {
   const [scoreTab, setScoreTab] = useState<'teams' | 'individual'>('teams')
   const { teams, players, rounds, totals, roundScores, individualRankings, currentRound } = useEventData()
   const { forfeits, markUsed } = useForfeits()
+  const { state: ceremonyState } = useForfeitCeremony()
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
+      <ForfeitCeremonyOverlay state={ceremonyState} />
       {activeTab === 'scores' && (
         <>
           <ScoreHeader teams={teams} totals={totals} currentRound={currentRound} />

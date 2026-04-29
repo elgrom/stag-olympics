@@ -138,11 +138,11 @@ test.describe('Full Event Playthrough', () => {
     await expect(page.getByRole('button', { name: /Start Forfeit Ceremony/ })).toBeVisible()
     await page.getByRole('button', { name: /Start Forfeit Ceremony/ }).click()
 
-    // Step 1: Spin for Diccon
+    // Step 1: Spin for Diccon (1.5s delay for broadcast animation)
     await expect(page.getByText('Forfeit Ceremony')).toBeVisible()
     await expect(page.getByText(/Spin for Diccon/)).toBeVisible()
     await page.getByRole('button', { name: /Spin the Wheel for Diccon/ }).click()
-    await expect(page.getByText(/Diccon must do:/)).toBeVisible()
+    await expect(page.getByText(/Diccon must do:/)).toBeVisible({ timeout: 5000 })
 
     // Move to losing team step
     await page.getByRole('button', { name: /Next.*Losing Team/ }).click()
@@ -151,7 +151,7 @@ test.describe('Full Event Playthrough', () => {
     await expect(page.getByText(/Bucks.*forfeit or penalty/)).toBeVisible()
     await page.getByRole('button', { name: /Spin a Forfeit/ }).click()
     await page.getByRole('button', { name: /Spin the Wheel/ }).click()
-    await expect(page.getByText(/Bucks must do:/)).toBeVisible()
+    await expect(page.getByText(/Bucks must do:/)).toBeVisible({ timeout: 5000 })
     await page.getByRole('button', { name: /Done/ }).click()
     await expect(page.getByText(/Forfeit ceremony complete/)).toBeVisible()
 
@@ -175,7 +175,7 @@ test.describe('Full Event Playthrough', () => {
     // FORFEIT CEREMONY (simple round — auto-triggered)
     await expect(page.getByText('Forfeit Ceremony')).toBeVisible()
     await page.getByRole('button', { name: /Spin the Wheel for Diccon/ }).click()
-    await expect(page.getByText(/Diccon must do:/)).toBeVisible()
+    await expect(page.getByText(/Diccon must do:/)).toBeVisible({ timeout: 5000 })
     await page.getByRole('button', { name: /Next.*Losing Team/ }).click()
 
     // Losing team (Stags) takes the penalty this time

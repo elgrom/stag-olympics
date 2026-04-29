@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useEventData } from '../../hooks/useEventData'
 import { useForfeits } from '../../hooks/useForfeits'
+import { useForfeitCeremony } from '../../hooks/useForfeitCeremony'
 import { RoundControl } from './RoundControl'
 import { RoundScorer } from './RoundScorer'
 import { QuizAdmin } from './QuizAdmin'
@@ -11,6 +12,7 @@ export function AdminPanel() {
   useEffect(() => { document.title = '⚙️ SO - Admin' }, [])
   const { teams, players, rounds, totals, currentRound } = useEventData()
   const { forfeits, addForfeit, clearAll: clearForfeits } = useForfeits()
+  const { broadcast: broadcastForfeit } = useForfeitCeremony()
   const [forfeitText, setForfeitText] = useState('')
 
   const handleAddForfeit = async () => {
@@ -75,7 +77,7 @@ export function AdminPanel() {
         <RoundScorer round={currentRound} teams={teams} players={players}
           forfeits={forfeits} onMarkForfeitUsed={(id) => {
             supabase.from('forfeits').update({ is_used: true }).eq('id', id)
-          }} />
+          }} onBroadcastForfeit={broadcastForfeit} />
       )}
 
       {teams.length === 2 && (
